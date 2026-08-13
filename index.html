@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estruturas de Dados e Algoritmos — Visualizador Interativo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;padding:20px;color:#222}
+.container{max-width:1400px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:34px 20px;text-align:center}
+header h1{font-size:2.3em;margin-bottom:8px}
+header p{opacity:.9}
+.tabs{display:flex;background:#f5f5f5;border-bottom:2px solid #e0e0e0;flex-wrap:wrap}
+.tab-button{flex:1;padding:14px 8px;border:none;background:none;cursor:pointer;font-size:.93em;font-weight:600;color:#333;border-bottom:3px solid transparent;min-width:110px;transition:.2s}
+.tab-button:hover{background:#e8e8e8}
+.tab-button.active{color:#667eea;border-bottom-color:#667eea;background:#fff}
+.content{padding:28px;display:none}
+.content.active{display:block}
+.section-title{font-size:1.6em;margin-bottom:6px;border-bottom:3px solid #667eea;padding-bottom:10px}
+.subtitle{color:#666;margin:10px 0 18px;font-size:.95em}
+.controls{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+input[type=number],input[type=text],select{padding:9px;border:2px solid #ddd;border-radius:6px;font-size:.95em}
+input:focus,select:focus{outline:none;border-color:#667eea}
+button{padding:9px 16px;background:#667eea;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.92em;transition:.2s}
+button:hover:not(:disabled){background:#764ba2;transform:translateY(-1px)}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+button.ghost{background:#fff;color:#667eea;border:2px solid #667eea}
+button.ghost:hover:not(:disabled){background:#667eea;color:#fff}
+button.danger{background:#e74c3c}
+button.danger:hover:not(:disabled){background:#c0392b}
+button.ok{background:#27ae60}
+button.ok:hover:not(:disabled){background:#1e8449}
+.viz{background:#fafafa;border:2px solid #e3e3e3;border-radius:8px;padding:18px;margin:14px 0;overflow-x:auto}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.panel{border:2px solid #e3e3e3;border-radius:8px;padding:16px;background:#fafafa}
+.panel h3{font-size:1.05em;color:#667eea;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #eee}
+.narration{background:#fff8e1;border-left:5px solid #f6b93b;padding:12px 14px;border-radius:5px;font-family:'Courier New',monospace;font-size:.92em;min-height:48px;line-height:1.5}
+.info-box{background:#e3f2fd;border-left:5px solid #2196f3;padding:14px;border-radius:5px;margin-top:16px;font-size:.93em;line-height:1.65}
+.info-box ul{margin:8px 0 0 20px}
+.code{background:#282a36;color:#f8f8f2;padding:14px;border-radius:6px;font-family:'Courier New',monospace;font-size:.86em;line-height:1.7;overflow-x:auto}
+.code .ln{display:block;padding:1px 6px;border-radius:3px;white-space:pre}
+.code .ln.hl{background:#ffd54f;color:#222;font-weight:bold}
+.kw{color:#ff79c6}.fn{color:#8be9fd}.st{color:#f1fa8c}.nu{color:#bd93f9}.cm{color:#6272a4}
+.log{background:#fff;border:2px solid #e3e3e3;border-radius:8px;padding:10px;max-height:230px;overflow-y:auto;font-family:'Courier New',monospace;font-size:.85em}
+.log-item{padding:7px 9px;margin-bottom:5px;border-left:4px solid #667eea;background:#f4f4ff;border-radius:4px;animation:sl .25s}
+.log-item.warn{border-left-color:#e67e22;background:#fdf1e5}
+.log-item.err{border-left-color:#e74c3c;background:#fdecea}
+.log-item.ok{border-left-color:#27ae60;background:#eaf7ef}
+@keyframes sl{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+.stat-row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.stat{background:#fff;border:2px solid #667eea;border-radius:6px;padding:8px 14px;font-size:.88em}
+.stat b{display:block;font-size:1.3em;color:#667eea}
+table.cx{width:100%;border-collapse:collapse;margin-top:16px;font-size:.9em}
+table.cx thead{background:#667eea;color:#fff}
+table.cx th,table.cx td{padding:10px;text-align:left;border-bottom:1px solid #ddd}
+table.cx tbody tr:hover{background:#f5f5f5}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.85em;margin:10px 0}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:15px;height:15px;border-radius:3px;display:inline-block}
+/* ponteiros */
+.mem-row{display:grid;grid-template-columns:120px 1fr 1fr;gap:12px;padding:10px;background:#f0f0f0;border-radius:6px;border-left:5px solid #667eea;margin-bottom:8px;align-items:center}
+.mem-row.ptr{border-left-color:#e74c3c;background:#fdecea}
+.mem-addr{background:#e3f2fd;padding:7px;border-radius:4px;font-family:monospace;font-weight:bold;color:#1565c0;text-align:center}
+.mem-val{background:#fff3cd;padding:7px;border-radius:4px;font-family:monospace;font-weight:bold;color:#7a5c00;text-align:center}
+.card{background:#fff;border:2px solid #667eea;border-radius:8px;padding:14px;margin-bottom:12px}
+.card.ptr{border-color:#e74c3c}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #eee;font-weight:bold}
+.fg{margin-bottom:9px}
+.fg label{display:block;font-size:.82em;font-weight:600;color:#555;margin-bottom:3px}
+.fg input,.fg select{width:100%;padding:7px;border:2px solid #ddd;border-radius:4px;font-family:monospace}
+.fg input:disabled{background:#f0f0f0;color:#666}
+.expl{background:#eafaf1;border-left:4px solid #27ae60;padding:9px;border-radius:4px;font-size:.85em;font-family:monospace;margin-top:8px;line-height:1.6}
+/* pilha */
+.stack-box{display:flex;flex-direction:column-reverse;gap:3px;width:230px;margin:0 auto;border:3px solid #667eea;border-top:none;border-radius:0 0 8px 8px;padding:6px;background:#fff}
+.slot{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;border-radius:4px;background:#eee;color:#999;font-family:monospace;font-weight:bold;transition:.25s}
+.slot .idx{font-size:.75em;opacity:.75}
+.slot.filled{background:#667eea;color:#fff}
+.slot.top{background:#27ae60;color:#fff;box-shadow:0 0 0 3px #a9dfbf}
+.slot.garbage{background:#f5f5f5;color:#c0392b;text-decoration:line-through}
+/* fila */
+.ring{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:8px 0}
+.cell{width:74px;text-align:center;font-family:monospace}
+.cell .box{height:56px;border:3px solid #ccc;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1.1em;background:#fff;color:#aaa;transition:.25s}
+.cell .box.filled{background:#667eea;color:#fff;border-color:#4c5fd7}
+.cell .box.front{border-color:#27ae60;box-shadow:0 0 0 3px #a9dfbf}
+.cell .box.rear{border-color:#e67e22;box-shadow:0 0 0 3px #f5cba7}
+.cell .box.both{border-color:#8e44ad;box-shadow:0 0 0 3px #d7bde2}
+.cell .tag{font-size:.7em;height:16px;color:#555;font-weight:bold}
+.cell .i{font-size:.7em;color:#999}
+/* memoria */
+.heapgrid{display:grid;grid-template-columns:repeat(16,1fr);gap:3px}
+.hcell{height:34px;border-radius:3px;background:#e8e8e8;border:1px solid #ccc;font-size:.62em;display:flex;align-items:center;justify-content:center;color:#666;font-family:monospace}
+.frame{background:#fff;border:2px solid #667eea;border-radius:6px;padding:9px;margin-bottom:6px;font-family:monospace;font-size:.85em}
+.frame .fname{font-weight:bold;color:#667eea;margin-bottom:4px}
+.frame.topf{border-color:#27ae60;box-shadow:0 0 0 3px #a9dfbf}
+/* recursao */
+.rframe{background:#fff;border:2px solid #667eea;border-radius:6px;padding:10px;margin-bottom:5px;font-family:monospace;font-size:.87em;display:flex;justify-content:space-between;animation:sl .2s}
+.rframe.active{border-color:#f39c12;background:#fef5e7;box-shadow:0 0 0 3px #fad7a0}
+.rframe.returning{border-color:#27ae60;background:#eafaf1}
+/* ordenacao */
+.bars{display:flex;align-items:flex-end;gap:3px;height:250px;padding:10px;background:#fff;border-radius:6px}
+.bar{flex:1;background:#667eea;border-radius:3px 3px 0 0;display:flex;align-items:flex-start;justify-content:center;color:#fff;font-size:.7em;font-weight:bold;padding-top:3px;transition:height .12s,background .12s;min-width:14px}
+.bar.cmp{background:#f1c40f;color:#333}
+.bar.swap{background:#e74c3c}
+.bar.sorted{background:#27ae60}
+.bar.pivot{background:#8e44ad}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>🎓 Estruturas de Dados e Algoritmos</h1>
+<p>Visualizador passo a passo — veja o que realmente acontece na memória</p>
+</header>
+
+<div class="tabs">
+<button class="tab-button active" data-tab="ponteiros">Ponteiros</button>
+<button class="tab-button" data-tab="listas">Listas Encadeadas</button>
+<button class="tab-button" data-tab="pilhas">Pilhas</button>
+<button class="tab-button" data-tab="filas">Filas</button>
+<button class="tab-button" data-tab="memoria">Memória</button>
+<button class="tab-button" data-tab="recursao">Recursão</button>
+<button class="tab-button" data-tab="ordenacao">Ordenação</button>
+</div>
+
+<!-- ================= PONTEIROS ================= -->
+<div id="ponteiros" class="content active">
+<h2 class="section-title">🎯 Ponteiros</h2>
+<p class="subtitle">Cada variável ocupa um endereço. Um ponteiro é uma variável que guarda <b>o endereço de outra</b>. Modifique qualquer campo e observe as consequências.</p>
+
+<div class="controls">
+<button onclick="P.newVar()">➕ Nova variável</button>
+<button onclick="P.newPtr()">🔗 Novo ponteiro</button>
+<button class="ghost" onclick="P.demo()">▶️ Demo guiada</button>
+<button class="danger" onclick="P.clear()">🗑️ Limpar</button>
+</div>
+
+<div class="narration" id="pNarr">Crie uma variável para começar. Ela receberá um endereço de memória simulado.</div>
+
+<div class="grid2" style="margin-top:16px">
+<div class="panel"><h3>📦 Variáveis</h3><div id="pVars"></div></div>
+<div class="panel"><h3>🔗 Ponteiros</h3><div id="pPtrs"></div></div>
+</div>
+
+<div class="viz"><h3 style="color:#667eea;margin-bottom:12px">💾 Mapa de memória</h3><div id="pMem"></div></div>
+
+<div class="grid2">
+<div class="panel"><h3>📝 Histórico</h3><div class="log" id="pLog"></div></div>
+<div class="panel"><h3>📖 Equivalente em C</h3><div class="code" id="pCode"></div></div>
+</div>
+
+<div class="info-box">
+<b>Os quatro operadores que importam:</b>
+<ul>
+<li><code>&x</code> — devolve o <b>endereço</b> de x</li>
+<li><code>ptr = &x</code> — ptr passa a <b>apontar para</b> x (muda o ponteiro, não x)</li>
+<li><code>*ptr</code> — <b>dereferência</b>: acessa o valor guardado no endereço</li>
+<li><code>*ptr = 7</code> — escreve <b>em x</b> através de ptr (x muda, ptr não)</li>
+</ul>
+</div>
+</div>
+
+<!-- ================= LISTAS ================= -->
+<div id="listas" class="content">
+<h2 class="section-title">🔗 Listas Encadeadas</h2>
+<p class="subtitle">Nós espalhados na memória, ligados por ponteiros. Toda operação percorre a lista nó a nó — acompanhe o ponteiro <b>atual</b> caminhando.</p>
+
+<div class="controls">
+<label style="font-weight:600">Tipo:</label>
+<select id="lType" onchange="L.setType()">
+<option value="simples">Simplesmente encadeada</option>
+<option value="dupla">Duplamente encadeada</option>
+<option value="circular">Circular</option>
+</select>
+<label style="font-weight:600">Velocidade:</label>
+<input type="range" id="lSpeed" min="1" max="100" value="55" style="width:120px">
+</div>
+
+<div class="controls">
+<input type="number" id="lVal" value="10" style="width:85px" placeholder="valor">
+<button onclick="L.insertHead()">Inserir no início</button>
+<button onclick="L.insertTail()">Inserir no fim</button>
+<input type="number" id="lPos" value="1" style="width:70px" placeholder="pos">
+<button onclick="L.insertAt()">Inserir na posição</button>
+</div>
+<div class="controls">
+<button class="ghost" onclick="L.removeHead()">Remover início</button>
+<button class="ghost" onclick="L.removeTail()">Remover fim</button>
+<button class="ghost" onclick="L.removeValue()">Remover valor</button>
+<button class="ok" onclick="L.search()">🔍 Buscar valor</button>
+<button class="ok" onclick="L.reverse()">↔️ Inverter lista</button>
+<button class="danger" onclick="L.clear()">Limpar</button>
+</div>
+
+<div class="narration" id="lNarr">Lista vazia: <code>head = NULL</code>. Insira um nó.</div>
+
+<div class="stat-row">
+<div class="stat">Tamanho<b id="lSize">0</b></div>
+<div class="stat">Passos da última operação<b id="lSteps">0</b></div>
+<div class="stat">Comparações<b id="lCmp">0</b></div>
+</div>
+
+<div class="viz"><svg id="lSvg" width="100%" height="230"></svg></div>
+
+<div class="grid2">
+<div class="panel"><h3>📖 Código em execução</h3><div class="code" id="lCode"></div></div>
+<div class="panel"><h3>📝 Histórico</h3><div class="log" id="lLog"></div></div>
+</div>
+
+<div class="info-box">
+<b>Por que isso importa:</b> inserir no início é <code>O(1)</code> — basta religar dois ponteiros. Inserir no fim de uma lista simples é <code>O(n)</code>, porque é preciso <b>percorrer</b> até achar o último nó. Já num array, acessar a posição <i>i</i> é <code>O(1)</code>, mas inserir no meio é <code>O(n)</code> por causa do deslocamento. Estruturas trocam um custo pelo outro.
+</div>
+</div>
+
+<!-- ================= PILHAS ================= -->
+<div id="pilhas" class="content">
+<h2 class="section-title">📚 Pilha (Stack) — LIFO</h2>
+<p class="subtitle">Implementada sobre um array de capacidade fixa com um índice <code>topo</code>. Note que <b>pop não apaga o dado</b> — apenas move o topo. O valor continua na memória como lixo.</p>
+
+<div class="controls">
+<input type="number" id="sVal" value="7" style="width:85px">
+<button onclick="S.push()">Push ⬇</button>
+<button class="ghost" onclick="S.pop()">Pop ⬆</button>
+<button class="ghost" onclick="S.peek()">Peek 👁</button>
+<label style="font-weight:600;margin-left:10px">Capacidade:</label>
+<input type="number" id="sCap" value="6" min="2" max="10" style="width:70px" onchange="S.reset()">
+<button class="danger" onclick="S.reset()">Limpar</button>
+</div>
+
+<div class="narration" id="sNarr">Pilha vazia. <code>topo = -1</code> é a convenção que indica "nada empilhado".</div>
+
+<div class="grid2">
+<div>
+<div class="viz">
+<div style="text-align:center;font-family:monospace;font-weight:bold;color:#667eea;margin-bottom:6px">▲ topo da pilha</div>
+<div class="stack-box" id="sBox"></div>
+<div style="text-align:center;font-family:monospace;margin-top:8px;color:#666">base (índice 0)</div>
+</div>
+<div class="stat-row">
+<div class="stat">topo<b id="sTop">-1</b></div>
+<div class="stat">Elementos<b id="sCount">0</b></div>
+</div>
+</div>
+<div>
+<div class="panel"><h3>📖 Código</h3><div class="code" id="sCode"></div></div>
+<div class="panel" style="margin-top:12px"><h3>📝 Histórico</h3><div class="log" id="sLog" style="max-height:150px"></div></div>
+</div>
+</div>
+
+<div class="panel" style="margin-top:16px">
+<h3>🧪 Aplicação real: verificação de parênteses balanceados</h3>
+<div class="controls">
+<input type="text" id="sExpr" value="{[a+(b*c)]-d}" style="flex:1;min-width:200px;font-family:monospace">
+<button class="ok" onclick="S.checkBalance()">Verificar</button>
+</div>
+<div class="narration" id="sBalNarr">Digite uma expressão e veja a pilha resolvendo o problema símbolo a símbolo.</div>
+</div>
+
+<div class="info-box"><b>LIFO:</b> o último a entrar é o primeiro a sair. É exatamente assim que o processador gerencia chamadas de função, o Ctrl+Z do seu editor e o botão "voltar" do navegador.</div>
+</div>
+
+<!-- ================= FILAS ================= -->
+<div id="filas" class="content">
+<h2 class="section-title">🚀 Fila (Queue) — FIFO</h2>
+<p class="subtitle">Compare as duas implementações: na fila <b>linear</b>, remover exige deslocar todos os elementos (O(n)). Na <b>circular</b>, apenas um índice avança com módulo (O(1)).</p>
+
+<div class="controls">
+<label style="font-weight:600">Implementação:</label>
+<select id="qType" onchange="Q.reset()">
+<option value="circular">Circular (buffer em anel)</option>
+<option value="linear">Linear com deslocamento</option>
+</select>
+<input type="number" id="qVal" value="5" style="width:85px">
+<button onclick="Q.enqueue()">Enqueue ➡</button>
+<button class="ghost" onclick="Q.dequeue()">Dequeue ⬅</button>
+<label style="font-weight:600;margin-left:8px">Capacidade:</label>
+<input type="number" id="qCap" value="6" min="3" max="10" style="width:70px" onchange="Q.reset()">
+<button class="danger" onclick="Q.reset()">Limpar</button>
+</div>
+
+<div class="narration" id="qNarr">Fila vazia. <code>inicio = 0, fim = -1, quantidade = 0</code>.</div>
+
+<div class="viz"><div class="ring" id="qRing"></div></div>
+
+<div class="stat-row">
+<div class="stat">início<b id="qFront">0</b></div>
+<div class="stat">fim<b id="qRear">-1</b></div>
+<div class="stat">quantidade<b id="qCount">0</b></div>
+<div class="stat">deslocamentos<b id="qShifts">0</b></div>
+</div>
+
+<div class="grid2">
+<div class="panel"><h3>📖 Código</h3><div class="code" id="qCode"></div></div>
+<div class="panel"><h3>📝 Histórico</h3><div class="log" id="qLog"></div></div>
+</div>
+
+<div class="info-box"><b>O detalhe que quase ninguém mostra:</b> na fila circular, quando <code>fim</code> chega ao final do array ele "dá a volta" com <code>(fim + 1) % capacidade</code> e reutiliza as posições liberadas no começo. Sem isso, a fila ficaria cheia mesmo com espaço sobrando.</div>
+</div>
+
+<!-- ================= MEMORIA ================= -->
+<div id="memoria" class="content">
+<h2 class="section-title">💾 Gerenciamento de Memória</h2>
+<p class="subtitle">A stack cresce e encolhe sozinha a cada chamada de função. O heap é manual: o que você aloca, você libera — ou vira vazamento.</p>
+
+<div class="controls">
+<button onclick="M.callFn()">📞 Chamar função</button>
+<button class="ghost" onclick="M.returnFn()">↩️ Retornar da função</button>
+<input type="number" id="mSize" value="4" min="1" max="12" style="width:70px">
+<button class="ok" onclick="M.malloc()">malloc(n)</button>
+<button class="ghost" onclick="M.free()">free(ptr)</button>
+<button class="danger" onclick="M.reset()">Reiniciar</button>
+</div>
+
+<div class="narration" id="mNarr">Chame uma função para empilhar um frame na stack, ou aloque memória no heap.</div>
+
+<div class="grid2">
+<div class="panel"><h3>📚 Stack (automática, cresce para baixo)</h3><div id="mStack" style="min-height:150px"></div></div>
+<div class="panel"><h3>🧱 Heap (manual)</h3>
+<div class="heapgrid" id="mHeap"></div>
+<div class="legend" style="margin-top:10px">
+<span><i class="sw" style="background:#667eea"></i>alocado com ponteiro</span>
+<span><i class="sw" style="background:#e74c3c"></i>vazamento (sem ponteiro)</span>
+<span><i class="sw" style="background:#e8e8e8;border:1px solid #ccc"></i>livre</span>
+</div>
+</div>
+</div>
+
+<div class="stat-row">
+<div class="stat">Blocos ativos<b id="mBlocks">0</b></div>
+<div class="stat">Células ocupadas<b id="mUsed">0</b></div>
+<div class="stat">Maior lacuna livre<b id="mGap">32</b></div>
+<div class="stat">Vazamentos<b id="mLeaks">0</b></div>
+</div>
+
+<div class="grid2">
+<div class="panel"><h3>📖 Código</h3><div class="code" id="mCode"></div></div>
+<div class="panel"><h3>📝 Histórico</h3><div class="log" id="mLog"></div></div>
+</div>
+
+<div class="info-box">
+<b>Três problemas clássicos que você pode reproduzir aqui:</b>
+<ul>
+<li><b>Vazamento:</b> aloque memória e retorne da função sem dar <code>free</code> — o bloco fica ocupado e ninguém mais tem o endereço.</li>
+<li><b>Fragmentação:</b> aloque três blocos, libere o do meio e tente alocar um bloco grande. Há espaço total, mas não contíguo.</li>
+<li><b>Ponteiro pendurado:</b> libere um bloco cujo ponteiro ainda existe em um frame.</li>
+</ul>
+</div>
+</div>
+
+<!-- ================= RECURSAO ================= -->
+<div id="recursao" class="content">
+<h2 class="section-title">🔄 Recursão</h2>
+<p class="subtitle">Recursão não é mágica: é a pilha de chamadas. Cada chamada empilha um frame com seus próprios parâmetros; cada retorno desempilha e entrega o valor a quem chamou.</p>
+
+<div class="controls">
+<select id="rType">
+<option value="fat">Fatorial — fatorial(n)</option>
+<option value="fib">Fibonacci — fib(n)</option>
+<option value="soma">Soma 1..n</option>
+<option value="hanoi">Torre de Hanói</option>
+</select>
+<input type="number" id="rN" value="4" min="1" max="8" style="width:70px">
+<button onclick="R.run()">▶️ Executar</button>
+<button class="ghost" onclick="R.step()">⏭️ Passo a passo</button>
+<button class="ghost" onclick="R.pause()">⏸️ Pausar</button>
+<label style="font-weight:600">Velocidade:</label>
+<input type="range" id="rSpeed" min="1" max="100" value="60" style="width:110px">
+</div>
+
+<div class="narration" id="rNarr">Escolha uma função e execute. Você verá cada frame entrando e saindo da pilha.</div>
+
+<div class="stat-row">
+<div class="stat">Chamadas totais<b id="rCalls">0</b></div>
+<div class="stat">Profundidade máxima<b id="rDepth">0</b></div>
+<div class="stat">Frames na pilha<b id="rStackN">0</b></div>
+<div class="stat">Resultado<b id="rResult">—</b></div>
+</div>
+
+<div class="grid2">
+<div class="panel"><h3>📚 Pilha de chamadas (ao vivo)</h3><div id="rStack" style="min-height:220px;max-height:340px;overflow-y:auto"></div></div>
+<div class="panel"><h3>📖 Código</h3><div class="code" id="rCode"></div>
+<div class="log" id="rLog" style="margin-top:12px;max-height:170px"></div>
+</div>
+</div>
+
+<div class="info-box" id="rInsight"><b>Caso base</b> é a condição que interrompe a recursão. Sem ele, a pilha cresce até o <i>stack overflow</i>.</div>
+</div>
+
+<!-- ================= ORDENACAO ================= -->
+<div id="ordenacao" class="content">
+<h2 class="section-title">🔀 Algoritmos de Ordenação</h2>
+<p class="subtitle">Barras proporcionais ao valor, com a linha de código em execução destacada e contadores reais de comparações e trocas.</p>
+
+<div class="controls">
+<select id="oAlg" onchange="O.showCode()">
+<option value="bubble">Bubble Sort</option>
+<option value="selection">Selection Sort</option>
+<option value="insertion">Insertion Sort</option>
+<option value="merge">Merge Sort</option>
+<option value="quick">Quick Sort</option>
+</select>
+<input type="number" id="oSize" value="14" min="5" max="30" style="width:75px">
+<button class="ghost" onclick="O.generate()">🎲 Novo array</button>
+<button class="ghost" onclick="O.generate('quase')">↗️ Quase ordenado</button>
+<button class="ghost" onclick="O.generate('inverso')">↘️ Invertido</button>
+<button onclick="O.start()" id="oStart">▶️ Ordenar</button>
+<label style="font-weight:600">Velocidade:</label>
+<input type="range" id="oSpeed" min="1" max="100" value="70" style="width:110px">
+</div>
+
+<div class="legend">
+<span><i class="sw" style="background:#667eea"></i>não ordenado</span>
+<span><i class="sw" style="background:#f1c40f"></i>comparando</span>
+<span><i class="sw" style="background:#e74c3c"></i>trocando</span>
+<span><i class="sw" style="background:#8e44ad"></i>pivô</span>
+<span><i class="sw" style="background:#27ae60"></i>posição final</span>
+</div>
+
+<div class="viz"><div class="bars" id="oBars"></div></div>
+
+<div class="stat-row">
+<div class="stat">Comparações<b id="oCmp">0</b></div>
+<div class="stat">Trocas / escritas<b id="oSwap">0</b></div>
+<div class="stat">Tamanho (n)<b id="oN">14</b></div>
+</div>
+
+<div class="narration" id="oNarr">Gere um array e escolha um algoritmo. Compare os contadores entre "quase ordenado" e "invertido" — a diferença explica o melhor e o pior caso.</div>
+
+<div class="panel" style="margin-top:14px"><h3>📖 Código</h3><div class="code" id="oCode"></div></div>
+
+<table class="cx">
+<thead><tr><th>Algoritmo</th><th>Melhor</th><th>Médio</th><th>Pior</th><th>Espaço</th><th>Estável?</th></tr></thead>
+<tbody>
+<tr><td>Bubble Sort</td><td>O(n)</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>Sim</td></tr>
+<tr><td>Selection Sort</td><td>O(n²)</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>Não</td></tr>
+<tr><td>Insertion Sort</td><td>O(n)</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td><td>Sim</td></tr>
+<tr><td>Merge Sort</td><td>O(n log n)</td><td>O(n log n)</td><td>O(n log n)</td><td>O(n)</td><td>Sim</td></tr>
+<tr><td>Quick Sort</td><td>O(n log n)</td><td>O(n log n)</td><td>O(n²)</td><td>O(log n)</td><td>Não</td></tr>
+</tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+/* ================= UTIL ================= */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const hex = n => '0x' + n.toString(16).toUpperCase();
+function log(id, msg, cls = '') {
+  const el = document.getElementById(id);
+  if (el.dataset.empty !== '0') { el.innerHTML = ''; el.dataset.empty = '0'; }
+  const d = document.createElement('div');
+  d.className = 'log-item ' + cls;
+  d.innerHTML = msg;
+  el.insertBefore(d, el.firstChild);
+  while (el.children.length > 25) el.removeChild(el.lastChild);
+}
+function narr(id, msg) { document.getElementById(id).innerHTML = msg; }
+function codeBlock(id, lines, hl = -1) {
+  document.getElementById(id).innerHTML = lines
+    .map((l, i) => `<span class="ln${i === hl ? ' hl' : ''}">${l}</span>`).join('');
+}
+document.querySelectorAll('.tab-button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab-button').forEach(c => c.classList.remove('active'));
+  document.getElementById(b.dataset.tab).classList.add('active');
+  b.classList.add('active');
+}));
+
+/* ================= PONTEIROS ================= */
+const P = {
+  vars: {}, ptrs: {}, addr: 4096, vc: 0, pc: 0,
+
+  newVar() {
+    const name = 'x' + this.vc++;
+    this.vars[name] = { name, value: Math.floor(Math.random() * 90) + 10, addr: this.addr };
+    this.addr += 4;
+    narr('pNarr', `Declarada <b>int ${name} = ${this.vars[name].value};</b> — o compilador reservou 4 bytes em <b>${hex(this.vars[name].addr)}</b>.`);
+    log('pLog', `int ${name} = ${this.vars[name].value};  // &${name} = ${hex(this.vars[name].addr)}`);
+    this.render();
+  },
+
+  newPtr() {
+    const names = Object.keys(this.vars);
+    if (!names.length) { narr('pNarr', '⚠️ Um ponteiro precisa de algo para apontar. Crie uma variável primeiro.'); return; }
+    const target = names[names.length - 1];
+    const name = 'ptr' + this.pc++;
+    this.ptrs[name] = { name, target, addr: this.addr };
+    this.addr += 8;
+    narr('pNarr', `<b>int *${name} = &${target};</b> — ${name} guarda o endereço ${hex(this.vars[target].addr)}, não o valor ${this.vars[target].value}.`);
+    log('pLog', `int *${name} = &${target};  // ${name} == ${hex(this.vars[target].addr)}`);
+    this.render();
+  },
+
+  setValue(name, v) {
+    const old = this.vars[name].value;
+    this.vars[name].value = parseInt(v) || 0;
+    const affected = Object.values(this.ptrs).filter(p => p.target === name).map(p => '*' + p.name);
+    narr('pNarr', `<b>${name} = ${this.vars[name].value};</b> escreveu direto em ${hex(this.vars[name].addr)}.` +
+      (affected.length ? ` Como ${affected.join(', ')} apontam para lá, elas passam a ler ${this.vars[name].value}.` : ''));
+    log('pLog', `${name} = ${this.vars[name].value};  // era ${old}`);
+    this.render();
+  },
+
+  deref(pname, v) {
+    const p = this.ptrs[pname], t = this.vars[p.target], old = t.value;
+    t.value = parseInt(v) || 0;
+    narr('pNarr', `<b>*${pname} = ${t.value};</b> — o ponteiro não mudou (continua ${hex(t.addr)}). O que mudou foi o conteúdo desse endereço: <b>${p.target}</b> passou de ${old} para ${t.value}.`);
+    log('pLog', `*${pname} = ${t.value};  // modificou ${p.target} indiretamente`, 'ok');
+    this.render();
+  },
+
+  retarget(pname, newTarget) {
+    const p = this.ptrs[pname], old = p.target;
+    p.target = newTarget;
+    narr('pNarr', `<b>${pname} = &${newTarget};</b> — agora o <i>ponteiro</i> mudou. Ele deixou de olhar para ${old} (${hex(this.vars[old] ? this.vars[old].addr : 0)}) e passou a olhar para ${newTarget} (${hex(this.vars[newTarget].addr)}). Nenhum valor foi alterado.`);
+    log('pLog', `${pname} = &${newTarget};  // reapontado (antes: &${old})`, 'warn');
+    this.render();
+  },
+
+  delVar(name) {
+    const orphans = Object.values(this.ptrs).filter(p => p.target === name).map(p => p.name);
+    delete this.vars[name];
+    orphans.forEach(o => this.ptrs[o].target = null);
+    narr('pNarr', orphans.length
+      ? `${name} saiu de escopo. <b>${orphans.join(', ')} viraram ponteiros pendurados</b> (dangling): guardam um endereço que não é mais válido. Usá-los é comportamento indefinido.`
+      : `${name} saiu de escopo e seus 4 bytes foram devolvidos.`);
+    log('pLog', `// ${name} destruída` + (orphans.length ? ` → ${orphans.join(', ')} pendurado(s)!` : ''), orphans.length ? 'err' : '');
+    this.render();
+  },
+
+  delPtr(name) { delete this.ptrs[name]; log('pLog', `// ${name} destruído`); this.render(); },
+
+  clear() {
+    this.vars = {}; this.ptrs = {}; this.addr = 4096; this.vc = 0; this.pc = 0;
+    document.getElementById('pLog').innerHTML = ''; document.getElementById('pLog').dataset.empty = '1';
+    narr('pNarr', 'Memória limpa. Crie uma variável para começar.');
+    this.render();
+  },
+
+  demo() {
+    this.clear();
+    this.newVar();
+    setTimeout(() => this.newPtr(), 700);
+    setTimeout(() => { const p = Object.keys(this.ptrs)[0]; this.deref(p, 99); }, 1600);
+    setTimeout(() => this.newVar(), 2500);
+    setTimeout(() => { const p = Object.keys(this.ptrs)[0], v = Object.keys(this.vars)[1]; this.retarget(p, v); }, 3400);
+  },
+
+  render() {
+    const vNames = Object.keys(this.vars), pNames = Object.keys(this.ptrs);
+
+    document.getElementById('pVars').innerHTML = vNames.length ? vNames.map(n => {
+      const v = this.vars[n];
+      const pointedBy = Object.values(this.ptrs).filter(p => p.target === n).map(p => p.name);
+      return `<div class="card">
+        <div class="card-head"><span>int <code>${v.name}</code></span>
+        <button class="danger" style="padding:4px 9px;font-size:.78em" onclick="P.delVar('${n}')">destruir</button></div>
+        <div class="fg"><label>Valor (edite para escrever direto na variável)</label>
+        <input type="number" value="${v.value}" onchange="P.setValue('${n}',this.value)"></div>
+        <div class="fg"><label>Endereço — &${v.name}</label><input disabled value="${hex(v.addr)}"></div>
+        <div class="expl">&${v.name} → ${hex(v.addr)}<br>${v.name} → ${v.value}
+        ${pointedBy.length ? `<br>apontada por: ${pointedBy.join(', ')}` : '<br>nenhum ponteiro aponta para ela'}</div>
+      </div>`;
+    }).join('') : '<p style="color:#999;text-align:center;padding:18px">Nenhuma variável.</p>';
+
+    document.getElementById('pPtrs').innerHTML = pNames.length ? pNames.map(n => {
+      const p = this.ptrs[n], t = p.target ? this.vars[p.target] : null;
+      if (!t) return `<div class="card ptr"><div class="card-head"><span>int* <code>${p.name}</code></span>
+        <button class="danger" style="padding:4px 9px;font-size:.78em" onclick="P.delPtr('${n}')">destruir</button></div>
+        <div class="expl" style="border-left-color:#e74c3c;background:#fdecea">⚠️ Ponteiro pendurado — aponta para memória inválida. Dereferenciar aqui é <i>undefined behavior</i>.</div></div>`;
+      const opts = vNames.map(v => `<option value="${v}" ${v === p.target ? 'selected' : ''}>&${v} (${hex(this.vars[v].addr)})</option>`).join('');
+      return `<div class="card ptr">
+        <div class="card-head"><span>int* <code>${p.name}</code></span>
+        <button class="danger" style="padding:4px 9px;font-size:.78em" onclick="P.delPtr('${n}')">destruir</button></div>
+        <div class="fg"><label>Endereço do próprio ponteiro — &${p.name}</label><input disabled value="${hex(p.addr)}"></div>
+        <div class="fg"><label>Conteúdo do ponteiro — para onde ele aponta (${p.name} = &...)</label>
+        <select onchange="P.retarget('${n}',this.value)">${opts}</select></div>
+        <div class="fg"><label>*${p.name} — valor apontado (edite para escrever via ponteiro)</label>
+        <input type="number" value="${t.value}" onchange="P.deref('${n}',this.value)"></div>
+        <div class="expl">${p.name}&nbsp; → ${hex(t.addr)} &nbsp;(endereço de ${p.target})<br>
+        *${p.name} → ${t.value} &nbsp;(valor de ${p.target})<br>
+        &${p.name} → ${hex(p.addr)} &nbsp;(onde o ponteiro mora)</div>
+      </div>`;
+    }).join('') : '<p style="color:#999;text-align:center;padding:18px">Nenhum ponteiro.</p>';
+
+    let mem = '';
+    vNames.forEach(n => {
+      const v = this.vars[n];
+      mem += `<div class="mem-row"><div><b>${v.name}</b><br><span style="font-size:.75em;color:#666">variável (4 bytes)</span></div>
+      <div class="mem-addr">${hex(v.addr)}</div><div class="mem-val">${v.value}</div></div>`;
+    });
+    pNames.forEach(n => {
+      const p = this.ptrs[n], t = p.target ? this.vars[p.target] : null;
+      mem += `<div class="mem-row ptr"><div><b>${p.name}</b><br><span style="font-size:.75em;color:#666">ponteiro (8 bytes)</span></div>
+      <div class="mem-addr">${hex(p.addr)}</div>
+      <div class="mem-val">${t ? '➜ ' + hex(t.addr) : '➜ inválido'}</div></div>`;
+    });
+    document.getElementById('pMem').innerHTML = mem || '<p style="color:#999;text-align:center;padding:18px">Sem conteúdo na memória.</p>';
+
+    const lines = [];
+    vNames.forEach(n => lines.push(`<span class="kw">int</span> ${n} = <span class="nu">${this.vars[n].value}</span>;   <span class="cm">// &${n} = ${hex(this.vars[n].addr)}</span>`));
+    pNames.forEach(n => {
+      const p = this.ptrs[n];
+      lines.push(p.target
+        ? `<span class="kw">int</span> *${p.name} = &amp;${p.target};   <span class="cm">// *${p.name} == ${this.vars[p.target].value}</span>`
+        : `<span class="kw">int</span> *${p.name} = <span class="cm">/* pendurado */</span>;`);
+    });
+    codeBlock('pCode', lines.length ? lines : ['<span class="cm">// crie variáveis e ponteiros</span>']);
+  }
+};
+P.render();
+
+/* ================= LISTAS ENCADEADAS ================= */
+const L = {
+  nodes: [], type: 'simples', addrBase: 8192, busy: false, cursor: -1, prev: -1, newIdx: -1, steps: 0, cmp: 0,
+
+  spd() { return 210 - parseInt(document.getElementById('lSpeed').value) * 2; },
+  setType() { this.type = document.getElementById('lType').value; this.draw(); narr('lNarr', `Tipo alterado para <b>${this.type}</b>.`); },
+  val() { return parseInt(document.getElementById('lVal').value) || 0; },
+  lock(b) { this.busy = b; },
+
+  mkNode(v) { return { v, addr: this.addrBase + this.nodes.length * 16 + Math.floor(Math.random() * 8) * 16 }; },
+
+  async insertHead() {
+    if (this.busy) return; this.lock(true); this.steps = 0; this.cmp = 0;
+    const n = this.mkNode(this.val());
+    this.codeFor('insertHead', 0);
+    narr('lNarr', `Passo 1: alocamos o nó em <b>${hex(n.addr)}</b> com valor ${n.v}.`);
+    this.nodes.unshift(n); this.newIdx = 0; this.draw(); await sleep(this.spd() * 2);
+    this.codeFor('insertHead', 2);
+    narr('lNarr', `Passo 2: <code>novo->next = head</code> — o novo nó passa a apontar para o antigo primeiro.`);
+    await sleep(this.spd() * 2);
+    this.codeFor('insertHead', 3);
+    narr('lNarr', `Passo 3: <code>head = novo</code>. Pronto — <b>2 atribuições, O(1)</b>, independente do tamanho da lista.`);
+    this.steps = 1; this.newIdx = -1; this.draw();
+    log('lLog', `inserirInicio(${n.v}) → O(1)`, 'ok');
+    this.lock(false);
+  },
+
+  async insertTail() {
+    if (this.busy) return; this.lock(true); this.steps = 0; this.cmp = 0;
+    const n = this.mkNode(this.val());
+    if (!this.nodes.length) { this.nodes.push(n); this.draw(); narr('lNarr', 'Lista vazia: <code>head = novo</code>.'); this.lock(false); return; }
+    this.codeFor('insertTail', 2);
+    for (let i = 0; i < this.nodes.length; i++) {
+      this.cursor = i; this.steps++; this.draw();
+      narr('lNarr', `Percorrendo: <code>atual</code> está no nó ${i} (valor ${this.nodes[i].v}). ${i < this.nodes.length - 1 ? '<code>atual->next != NULL</code>, continua.' : '<code>atual->next == NULL</code> → chegamos ao último.'}`);
+      await sleep(this.spd());
+    }
+    this.codeFor('insertTail', 4);
+    this.nodes.push(n); this.newIdx = this.nodes.length - 1; this.cursor = -1; this.draw();
+    narr('lNarr', `<code>atual->next = novo</code>. Foram <b>${this.steps} passos</b> só para achar o fim — por isso inserir no fim de uma lista simples é <b>O(n)</b>.`);
+    log('lLog', `inserirFim(${n.v}) → ${this.steps} passos, O(n)`, 'warn');
+    await sleep(this.spd()); this.newIdx = -1; this.draw();
+    this.lock(false);
+  },
+
+  async insertAt() {
+    if (this.busy) return;
+    const pos = Math.max(0, Math.min(parseInt(document.getElementById('lPos').value) || 0, this.nodes.length));
+    if (pos === 0) return this.insertHead();
+    this.lock(true); this.steps = 0;
+    this.codeFor('insertAt', 2);
+    for (let i = 0; i < pos; i++) {
+      this.cursor = i; this.steps++; this.draw();
+      narr('lNarr', `Avançando até a posição ${pos}: <code>atual</code> no índice ${i}. Faltam ${pos - i - 1} passos.`);
+      await sleep(this.spd());
+    }
+    const n = this.mkNode(this.val());
+    this.codeFor('insertAt', 4);
+    narr('lNarr', `Agora a religação, <b>nesta ordem</b>: <code>novo->next = atual->next</code> e só então <code>atual->next = novo</code>. Inverter a ordem perderia o resto da lista.`);
+    this.nodes.splice(pos, 0, n); this.newIdx = pos; this.cursor = -1; this.draw();
+    log('lLog', `inserirNaPosicao(${pos}, ${n.v}) → ${this.steps} passos`);
+    await sleep(this.spd() * 2); this.newIdx = -1; this.draw();
+    this.lock(false);
+  },
+
+  async removeHead() {
+    if (this.busy || !this.nodes.length) { narr('lNarr', 'Lista vazia — nada a remover.'); return; }
+    this.lock(true);
+    const old = this.nodes[0];
+    this.cursor = 0; this.draw();
+    this.codeFor('removeHead', 1);
+    narr('lNarr', `<code>temp = head</code> — guardamos o endereço ${hex(old.addr)} antes de perdê-lo.`);
+    await sleep(this.spd() * 2);
+    this.codeFor('removeHead', 2);
+    narr('lNarr', `<code>head = head->next</code> — a lista já começa no próximo nó.`);
+    await sleep(this.spd() * 2);
+    this.codeFor('removeHead', 3);
+    this.nodes.shift(); this.cursor = -1; this.draw();
+    narr('lNarr', `<code>free(temp)</code> — memória devolvida. Sem o <code>temp</code>, esse bloco viraria vazamento. Custo: <b>O(1)</b>.`);
+    log('lLog', `removerInicio() → removeu ${old.v}, O(1)`, 'ok');
+    this.lock(false);
+  },
+
+  async removeTail() {
+    if (this.busy || !this.nodes.length) { narr('lNarr', 'Lista vazia.'); return; }
+    this.lock(true); this.steps = 0;
+    for (let i = 0; i < this.nodes.length; i++) {
+      this.cursor = i; this.prev = i - 1; this.steps++; this.draw();
+      narr('lNarr', `Preciso do <b>penúltimo</b> nó para religar. <code>anterior</code>=${i - 1 < 0 ? 'NULL' : i - 1}, <code>atual</code>=${i}.`);
+      await sleep(this.spd());
+    }
+    const old = this.nodes.pop();
+    this.cursor = -1; this.prev = -1; this.draw();
+    narr('lNarr', `<code>anterior->next = NULL; free(atual)</code>. Removeu ${old.v} em <b>${this.steps} passos, O(n)</b>. Numa lista <b>dupla</b> com ponteiro <code>tail</code>, isso seria O(1).`);
+    log('lLog', `removerFim() → ${this.steps} passos, O(n)`, 'warn');
+    this.lock(false);
+  },
+
+  async removeValue() {
+    if (this.busy || !this.nodes.length) return;
+    this.lock(true); this.steps = 0; this.cmp = 0;
+    const alvo = this.val();
+    this.codeFor('removeValue', 2);
+    for (let i = 0; i < this.nodes.length; i++) {
+      this.cursor = i; this.prev = i - 1; this.steps++; this.cmp++; this.draw();
+      narr('lNarr', `Comparando <code>atual->dado (${this.nodes[i].v}) == ${alvo}</code>? ${this.nodes[i].v === alvo ? '<b>Sim!</b>' : 'Não, avança.'}`);
+      await sleep(this.spd());
+      if (this.nodes[i].v === alvo) {
+        this.codeFor('removeValue', 5);
+        this.nodes.splice(i, 1);
+        this.cursor = -1; this.prev = -1; this.draw();
+        narr('lNarr', `<code>anterior->next = atual->next; free(atual)</code> — o nó foi "pulado" e liberado. ${this.cmp} comparações.`);
+        log('lLog', `removerValor(${alvo}) → achou em ${this.cmp} comparações`, 'ok');
+        this.lock(false); return;
+      }
+    }
+    this.cursor = -1; this.prev = -1; this.draw();
+    narr('lNarr', `Percorreu a lista inteira (${this.cmp} comparações) e <b>não encontrou ${alvo}</b>. Chegou a <code>NULL</code>.`);
+    log('lLog', `removerValor(${alvo}) → não encontrado`, 'err');
+    this.lock(false);
+  },
+
+  async search() {
+    if (this.busy || !this.nodes.length) return;
+    this.lock(true); this.steps = 0; this.cmp = 0;
+    const alvo = this.val();
+    this.codeFor('search', 1);
+    for (let i = 0; i < this.nodes.length; i++) {
+      this.cursor = i; this.cmp++; this.steps++; this.draw();
+      narr('lNarr', `<code>atual->dado == ${alvo}</code>? Nó ${i} contém ${this.nodes[i].v}. ${this.nodes[i].v === alvo ? '✅ Encontrado.' : '❌ <code>atual = atual->next</code>'}`);
+      await sleep(this.spd());
+      if (this.nodes[i].v === alvo) {
+        narr('lNarr', `Encontrado na posição ${i} após <b>${this.cmp} comparações</b>. Note: numa lista não há acesso direto — sempre partindo do <code>head</code>. Busca é <b>O(n)</b>, diferente de um array indexado.`);
+        log('lLog', `buscar(${alvo}) → posição ${i}, ${this.cmp} comparações`, 'ok');
+        await sleep(this.spd() * 2); this.cursor = -1; this.draw(); this.lock(false); return;
+      }
+    }
+    narr('lNarr', `Não encontrado. Pior caso: <b>n comparações</b>.`);
+    log('lLog', `buscar(${alvo}) → não encontrado (${this.cmp} comparações)`, 'err');
+    this.cursor = -1; this.draw(); this.lock(false);
+  },
+
+  async reverse() {
+    if (this.busy || this.nodes.length < 2) return;
+    this.lock(true);
+    narr('lNarr', 'Inversão clássica com três ponteiros: <code>anterior</code>, <code>atual</code> e <code>proximo</code>. A cada passo, invertemos uma seta.');
+    this.codeFor('reverse', 3);
+    for (let i = 0; i < this.nodes.length; i++) {
+      this.cursor = i; this.prev = i - 1; this.draw();
+      narr('lNarr', `Passo ${i + 1}: guarda <code>proximo = atual->next</code>, faz <code>atual->next = anterior</code>, depois avança os dois. Sem o <code>proximo</code>, o resto da lista se perderia.`);
+      await sleep(this.spd());
+    }
+    this.nodes.reverse(); this.cursor = -1; this.prev = -1; this.draw();
+    narr('lNarr', 'Lista invertida em <b>uma única passagem, O(n)</b>, sem memória extra — só três ponteiros.');
+    log('lLog', 'inverter() → O(n), O(1) de espaço', 'ok');
+    this.lock(false);
+  },
+
+  clear() { if (this.busy) return; this.nodes = []; this.cursor = -1; this.prev = -1; this.draw(); narr('lNarr', 'Lista vazia: <code>head = NULL</code>.'); },
+
+  codeFor(op, hl) {
+    const C = {
+      insertHead: ['<span class="kw">void</span> <span class="fn">inserirInicio</span>(No** head, <span class="kw">int</span> v) {', '  No* novo = <span class="fn">malloc</span>(<span class="kw">sizeof</span>(No));', '  novo->dado = v;', '  novo->prox = *head;', '  *head = novo;   <span class="cm">// O(1)</span>', '}'],
+      insertTail: ['<span class="kw">void</span> <span class="fn">inserirFim</span>(No* head, <span class="kw">int</span> v) {', '  No* atual = head;', '  <span class="kw">while</span> (atual->prox != NULL)', '    atual = atual->prox;   <span class="cm">// percorre tudo</span>', '  atual->prox = novo;      <span class="cm">// O(n)</span>', '}'],
+      insertAt: ['<span class="kw">void</span> <span class="fn">inserirEm</span>(No* head, <span class="kw">int</span> pos, <span class="kw">int</span> v) {', '  No* atual = head;', '  <span class="kw">for</span> (<span class="kw">int</span> i = 0; i &lt; pos-1; i++)', '    atual = atual->prox;', '  novo->prox = atual->prox;  <span class="cm">// ORDEM IMPORTA</span>', '  atual->prox = novo;', '}'],
+      removeHead: ['<span class="kw">void</span> <span class="fn">removerInicio</span>(No** head) {', '  No* temp = *head;      <span class="cm">// guarda o endereço</span>', '  *head = (*head)->prox; <span class="cm">// religa</span>', '  <span class="fn">free</span>(temp);          <span class="cm">// devolve a memória</span>', '}'],
+      removeValue: ['<span class="kw">void</span> <span class="fn">removerValor</span>(No** head, <span class="kw">int</span> v) {', '  No *atual = *head, *ant = NULL;', '  <span class="kw">while</span> (atual && atual->dado != v) {', '    ant = atual; atual = atual->prox;', '  }', '  ant->prox = atual->prox; <span class="fn">free</span>(atual);', '}'],
+      search: ['No* <span class="fn">buscar</span>(No* head, <span class="kw">int</span> v) {', '  <span class="kw">for</span> (No* a = head; a; a = a->prox)', '    <span class="kw">if</span> (a->dado == v) <span class="kw">return</span> a;', '  <span class="kw">return</span> NULL;   <span class="cm">// O(n) sempre</span>', '}'],
+      reverse: ['<span class="kw">void</span> <span class="fn">inverter</span>(No** head) {', '  No *ant = NULL, *atual = *head, *prox;', '  <span class="kw">while</span> (atual) {', '    prox = atual->prox;   <span class="cm">// salva</span>', '    atual->prox = ant;    <span class="cm">// inverte</span>', '    ant = atual; atual = prox;', '  }', '  *head = ant;', '}']
+    };
+    codeBlock('lCode', C[op], hl);
+  },
+
+  draw() {
+    document.getElementById('lSize').textContent = this.nodes.length;
+    document.getElementById('lSteps').textContent = this.steps;
+    document.getElementById('lCmp').textContent = this.cmp;
+    const svg = document.getElementById('lSvg');
+    const dbl = this.type === 'dupla';
+    const nw = dbl ? 150 : 110, gap = 46, x0 = 60, y = 90;
+    const W = Math.max(900, x0 + this.nodes.length * (nw + gap) + 90);
+    svg.setAttribute('viewBox', `0 0 ${W} 230`);
+    svg.setAttribute('width', W);
+    let s = `<defs>
+      <marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><polygon points="0 0,9 3,0 6" fill="#e74c3c"/></marker>
+      <marker id="ah2" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><polygon points="0 0,9 3,0 6" fill="#2980b9"/></marker>
+      <marker id="ah3" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><polygon points="0 0,9 3,0 6" fill="#27ae60"/></marker>
+    </defs>`;
+
+    if (!this.nodes.length) {
+      s += `<text x="${W / 2}" y="110" text-anchor="middle" font-family="monospace" font-size="20" fill="#aaa">head = NULL  (lista vazia)</text>`;
+      svg.innerHTML = s; return;
+    }
+
+    // head / tail
+    s += `<text x="${x0 + 20}" y="40" font-family="monospace" font-size="15" font-weight="bold" fill="#27ae60">head</text>
+          <line x1="${x0 + 30}" y1="46" x2="${x0 + 30}" y2="${y - 6}" stroke="#27ae60" stroke-width="2.5" marker-end="url(#ah3)"/>`;
+    const lastX = x0 + (this.nodes.length - 1) * (nw + gap);
+    if (this.nodes.length > 1) {
+      s += `<text x="${lastX + nw - 34}" y="40" font-family="monospace" font-size="15" font-weight="bold" fill="#8e44ad">tail</text>
+            <line x1="${lastX + nw - 22}" y1="46" x2="${lastX + nw - 22}" y2="${y - 6}" stroke="#8e44ad" stroke-width="2.5" marker-end="url(#ah3)"/>`;
+    }
+
+    this.nodes.forEach((n, i) => {
+      const x = x0 + i * (nw + gap);
+      const isCur = i === this.cursor, isPrev = i === this.prev, isNew = i === this.newIdx;
+      const fill = isNew ? '#27ae60' : isCur ? '#e67e22' : '#667eea';
+      const stroke = isCur ? '#d35400' : isNew ? '#1e8449' : '#4c5fd7';
+
+      let dx = x;
+      if (dbl) {
+        s += `<rect x="${x}" y="${y}" width="45" height="66" fill="#ecf0f1" stroke="${stroke}" stroke-width="2.5" rx="4"/>
+              <text x="${x + 22}" y="${y + 30}" text-anchor="middle" font-family="monospace" font-size="10" fill="#555">prev</text>
+              <text x="${x + 22}" y="${y + 48}" text-anchor="middle" font-family="monospace" font-size="11" fill="#2980b9">${i === 0 ? 'NULL' : '●'}</text>`;
+        dx = x + 45;
+      }
+      s += `<rect x="${dx}" y="${y}" width="60" height="66" fill="${fill}" stroke="${stroke}" stroke-width="2.5" rx="4"/>
+            <text x="${dx + 30}" y="${y + 28}" text-anchor="middle" font-size="19" font-weight="bold" fill="#fff">${n.v}</text>
+            <text x="${dx + 30}" y="${y + 50}" text-anchor="middle" font-size="9" fill="#e8e8ff" font-family="monospace">dado</text>`;
+      s += `<rect x="${dx + 60}" y="${y}" width="45" height="66" fill="#fdecea" stroke="#e74c3c" stroke-width="2.5" rx="4"/>
+            <text x="${dx + 82}" y="${y + 30}" text-anchor="middle" font-family="monospace" font-size="10" fill="#555">next</text>
+            <text x="${dx + 82}" y="${y + 48}" text-anchor="middle" font-family="monospace" font-size="11" fill="#c0392b">${(i === this.nodes.length - 1 && this.type !== 'circular') ? 'NULL' : '●'}</text>`;
+      s += `<text x="${x + nw / 2}" y="${y + 84}" text-anchor="middle" font-family="monospace" font-size="10" fill="#888">${hex(n.addr)}</text>`;
+
+      if (isCur) s += `<text x="${x + nw / 2}" y="${y - 16}" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#e67e22">▼ atual</text>`;
+      if (isPrev) s += `<text x="${x + nw / 2}" y="${y - 30}" text-anchor="middle" font-family="monospace" font-size="12" font-weight="bold" fill="#2980b9">▼ anterior</text>`;
+
+      // seta next
+      if (i < this.nodes.length - 1) {
+        s += `<line x1="${x + nw}" y1="${y + 33}" x2="${x + nw + gap - 6}" y2="${y + 33}" stroke="#e74c3c" stroke-width="2.5" marker-end="url(#ah)"/>`;
+        if (dbl) s += `<path d="M ${x + nw + gap - 4} ${y + 56} L ${x + nw + 4} ${y + 56}" stroke="#2980b9" stroke-width="2.5" fill="none" marker-end="url(#ah2)"/>`;
+      } else if (this.type !== 'circular') {
+        s += `<line x1="${x + nw}" y1="${y + 33}" x2="${x + nw + 28}" y2="${y + 33}" stroke="#e74c3c" stroke-width="2.5" marker-end="url(#ah)"/>
+              <text x="${x + nw + 52}" y="${y + 38}" font-family="monospace" font-size="13" font-weight="bold" fill="#c0392b">NULL</text>`;
+      }
+    });
+
+    if (this.type === 'circular' && this.nodes.length) {
+      const endX = lastX + nw, midY = y + 33;
+      s += `<path d="M ${endX} ${midY} C ${endX + 40} ${midY + 90}, ${x0 - 40} ${midY + 90}, ${x0 - 4} ${midY}"
+            stroke="#e74c3c" stroke-width="2.5" fill="none" stroke-dasharray="6,4" marker-end="url(#ah)"/>
+            <text x="${(x0 + endX) / 2}" y="${midY + 82}" text-anchor="middle" font-family="monospace" font-size="12" fill="#c0392b">último->prox = head (circular)</text>`;
+    }
+    svg.innerHTML = s;
+  }
+};
+L.codeFor('search', -1); L.draw();
+
+/* ================= PILHA ================= */
+const S = {
+  arr: [], garbage: [], top: -1,
+  cap() { return parseInt(document.getElementById('sCap').value) || 6; },
+
+  reset() {
+    this.arr = new Array(this.cap()).fill(null); this.garbage = new Array(this.cap()).fill(null); this.top = -1;
+    document.getElementById('sLog').innerHTML = ''; document.getElementById('sLog').dataset.empty = '1';
+    narr('sNarr', 'Pilha vazia. <code>topo = -1</code> é a convenção que indica "nada empilhado".');
+    this.draw(); this.code(-1);
+  },
+
+  push() {
+    const v = parseInt(document.getElementById('sVal').value) || 0;
+    if (this.top >= this.cap() - 1) {
+      narr('sNarr', `❌ <b>Stack Overflow!</b> topo = ${this.top} já é o último índice (capacidade ${this.cap()}). Em uma pilha de tamanho fixo, empilhar aqui sobrescreveria memória alheia — por isso a verificação vem <b>antes</b> da escrita.`);
+      log('sLog', `push(${v}) → OVERFLOW recusado`, 'err'); this.code(1); return;
+    }
+    this.top++; this.arr[this.top] = v; this.garbage[this.top] = null;
+    narr('sNarr', `<code>topo++</code> (agora ${this.top}), depois <code>pilha[${this.top}] = ${v}</code>. Sempre nessa ordem: incrementa e então escreve.`);
+    log('sLog', `push(${v}) → topo = ${this.top}`, 'ok');
+    this.code(2); this.draw();
+  },
+
+  pop() {
+    if (this.top < 0) {
+      narr('sNarr', '❌ <b>Stack Underflow!</b> <code>topo == -1</code>, não há o que desempilhar.');
+      log('sLog', 'pop() → UNDERFLOW', 'err'); this.code(6); return;
+    }
+    const v = this.arr[this.top];
+    this.garbage[this.top] = v; this.arr[this.top] = null;
+    this.top--;
+    narr('sNarr', `<code>valor = pilha[${this.top + 1}]</code> e depois <code>topo--</code>. Repare: o número <b>${v}</b> continua fisicamente na posição ${this.top + 1} (mostrado riscado). A pilha só "esqueceu" dele — é isso que significa "memória não é apagada, é marcada como disponível".`);
+    log('sLog', `pop() → retornou ${v}, topo = ${this.top}`, 'warn');
+    this.code(7); this.draw();
+  },
+
+  peek() {
+    if (this.top < 0) { narr('sNarr', 'Pilha vazia — <code>peek()</code> não tem o que devolver.'); return; }
+    narr('sNarr', `<code>peek()</code> devolve <b>${this.arr[this.top]}</b> <i>sem</i> alterar o topo. Ler não é remover.`);
+    log('sLog', `peek() → ${this.arr[this.top]} (topo inalterado)`);
+    this.code(10); this.draw();
+  },
+
+  async checkBalance() {
+    const expr = document.getElementById('sExpr').value;
+    this.reset();
+    const pares = { ')': '(', ']': '[', '}': '{' };
+    for (let i = 0; i < expr.length; i++) {
+      const c = expr[i];
+      if ('([{'.includes(c)) {
+        if (this.top < this.cap() - 1) { this.top++; this.arr[this.top] = c; this.garbage[this.top] = null; }
+        narr('sBalNarr', `'${c}' é abertura → <b>push</b>. Guardamos para saber o que precisa fechar depois.`);
+        this.draw(); await sleep(420);
+      } else if (')]}'.includes(c)) {
+        if (this.top < 0) {
+          narr('sBalNarr', `❌ '${c}' fecha algo que nunca abriu. Expressão <b>desbalanceada</b>.`); return;
+        }
+        const t = this.arr[this.top];
+        if (t !== pares[c]) { narr('sBalNarr', `❌ '${c}' não casa com '${t}' no topo. <b>Desbalanceada</b>.`); return; }
+        this.garbage[this.top] = t; this.arr[this.top] = null; this.top--;
+        narr('sBalNarr', `'${c}' casa com '${t}' do topo → <b>pop</b>. Esse par está resolvido.`);
+        this.draw(); await sleep(420);
+      }
+    }
+    narr('sBalNarr', this.top === -1
+      ? '✅ Pilha terminou vazia → expressão <b>balanceada</b>. Note como a natureza LIFO resolve o aninhamento naturalmente.'
+      : `❌ Sobraram ${this.top + 1} símbolo(s) na pilha → <b>desbalanceada</b> (abriu e não fechou).`);
+    this.draw();
+  },
+
+  code(hl) {
+    codeBlock('sCode', [
+      '<span class="kw">void</span> <span class="fn">push</span>(<span class="kw">int</span> v) {',
+      '  <span class="kw">if</span> (topo == CAP-1) <span class="kw">return</span>; <span class="cm">// overflow</span>',
+      '  pilha[++topo] = v;',
+      '}',
+      '',
+      '<span class="kw">int</span> <span class="fn">pop</span>() {',
+      '  <span class="kw">if</span> (topo == -1) <span class="kw">return</span> ERRO; <span class="cm">// underflow</span>',
+      '  <span class="kw">return</span> pilha[topo--]; <span class="cm">// não apaga o dado</span>',
+      '}',
+      '',
+      '<span class="kw">int</span> <span class="fn">peek</span>() { <span class="kw">return</span> pilha[topo]; }'
+    ], hl);
+  },
+
+  draw() {
+    const box = document.getElementById('sBox');
+    box.innerHTML = '';
+    for (let i = 0; i < this.cap(); i++) {
+      const d = document.createElement('div');
+      let cls = 'slot';
+      let txt = '—';
+      if (this.arr[i] !== null && i <= this.top) { cls += i === this.top ? ' filled top' : ' filled'; txt = this.arr[i]; }
+      else if (this.garbage[i] !== null) { cls += ' garbage'; txt = this.garbage[i]; }
+      d.className = cls;
+      d.innerHTML = `<span class="idx">[${i}]</span><span>${txt}</span>${i === this.top ? '<span class="idx">← topo</span>' : ''}`;
+      box.appendChild(d);
+    }
+    document.getElementById('sTop').textContent = this.top;
+    document.getElementById('sCount').textContent = this.top + 1;
+  }
+};
+S.reset();
+
+/* ================= FILA ================= */
+const Q = {
+  arr: [], front: 0, rear: -1, count: 0, shifts: 0,
+  cap() { return parseInt(document.getElementById('qCap').value) || 6; },
+  type() { return document.getElementById('qType').value; },
+
+  reset() {
+    this.arr = new Array(this.cap()).fill(null); this.front = 0; this.rear = -1; this.count = 0; this.shifts = 0;
+    document.getElementById('qLog').innerHTML = ''; document.getElementById('qLog').dataset.empty = '1';
+    narr('qNarr', this.type() === 'circular'
+      ? 'Fila circular vazia. <code>inicio = 0, fim = -1, quantidade = 0</code>. Os índices vão "dar a volta" no array.'
+      : 'Fila linear vazia. O início é sempre a posição 0 — remover exige deslocar todo mundo.');
+    this.draw(); this.code(-1);
+  },
+
+  enqueue() {
+    const v = parseInt(document.getElementById('qVal').value) || 0;
+    if (this.count === this.cap()) {
+      narr('qNarr', '❌ Fila cheia. <code>quantidade == capacidade</code>. Em um buffer em anel, é o contador que detecta isso — comparar só os índices seria ambíguo (cheia e vazia dariam o mesmo resultado).');
+      log('qLog', `enqueue(${v}) → fila cheia`, 'err'); return;
+    }
+    if (this.type() === 'circular') {
+      const antes = this.rear;
+      this.rear = (this.rear + 1) % this.cap();
+      this.arr[this.rear] = v; this.count++;
+      narr('qNarr', `<code>fim = (${antes} + 1) % ${this.cap()} = ${this.rear}</code>, depois <code>fila[${this.rear}] = ${v}</code>.` +
+        (antes === this.cap() - 1 ? ' <b>Deu a volta!</b> O índice voltou ao começo e reaproveitou espaço liberado.' : ' Custo O(1).'));
+      log('qLog', `enqueue(${v}) → fim = ${this.rear}, qtd = ${this.count}`, 'ok');
+    } else {
+      this.arr[this.count] = v; this.rear = this.count; this.count++; this.front = 0;
+      narr('qNarr', `<code>fila[${this.rear}] = ${v}</code>. Na versão linear o fim é sempre <code>quantidade-1</code>. Custo O(1) — o problema aparece na remoção.`);
+      log('qLog', `enqueue(${v}) → posição ${this.rear}`, 'ok');
+    }
+    this.code(2); this.draw();
+  },
+
+  dequeue() {
+    if (this.count === 0) {
+      narr('qNarr', '❌ Fila vazia — <code>quantidade == 0</code>, nada a remover.');
+      log('qLog', 'dequeue() → fila vazia', 'err'); return;
+    }
+    if (this.type() === 'circular') {
+      const v = this.arr[this.front], antes = this.front;
+      this.arr[this.front] = null;
+      this.front = (this.front + 1) % this.cap(); this.count--;
+      narr('qNarr', `<code>valor = fila[${antes}]</code>, depois <code>inicio = (${antes} + 1) % ${this.cap()} = ${this.front}</code>. <b>Nenhum elemento se moveu</b> — só o índice avançou. Isso é O(1)` +
+        (antes === this.cap() - 1 ? ' e acabou de dar a volta.' : '.'));
+      log('qLog', `dequeue() → ${v}, início = ${this.front}`, 'ok');
+    } else {
+      const v = this.arr[0];
+      for (let i = 0; i < this.count - 1; i++) { this.arr[i] = this.arr[i + 1]; this.shifts++; }
+      this.arr[this.count - 1] = null; this.count--; this.rear = this.count - 1;
+      narr('qNarr', `Removeu ${v} — mas para manter o início em 0, foi preciso <b>deslocar ${this.count} elementos</b> uma posição para a esquerda. Total acumulado: ${this.shifts} deslocamentos. Isso é <b>O(n) por remoção</b>, e é exatamente o desperdício que a fila circular elimina.`);
+      log('qLog', `dequeue() → ${v}, ${this.count} deslocamentos`, 'warn');
+    }
+    this.code(7); this.draw();
+  },
+
+  code(hl) {
+    if (this.type() === 'circular') {
+      codeBlock('qCode', [
+        '<span class="kw">void</span> <span class="fn">enqueue</span>(<span class="kw">int</span> v) {',
+        '  <span class="kw">if</span> (qtd == CAP) <span class="kw">return</span>; <span class="cm">// cheia</span>',
+        '  fim = (fim + 1) % CAP;   <span class="cm">// dá a volta</span>',
+        '  fila[fim] = v; qtd++;',
+        '}',
+        '',
+        '<span class="kw">int</span> <span class="fn">dequeue</span>() {',
+        '  <span class="kw">if</span> (qtd == 0) <span class="kw">return</span> ERRO;',
+        '  <span class="kw">int</span> v = fila[inicio];',
+        '  inicio = (inicio + 1) % CAP;  <span class="cm">// O(1)</span>',
+        '  qtd--; <span class="kw">return</span> v;',
+        '}'
+      ], hl);
+    } else {
+      codeBlock('qCode', [
+        '<span class="kw">void</span> <span class="fn">enqueue</span>(<span class="kw">int</span> v) {',
+        '  <span class="kw">if</span> (qtd == CAP) <span class="kw">return</span>;',
+        '  fila[qtd++] = v;   <span class="cm">// O(1)</span>',
+        '}',
+        '',
+        '<span class="kw">int</span> <span class="fn">dequeue</span>() {',
+        '  <span class="kw">int</span> v = fila[0];',
+        '  <span class="kw">for</span> (i = 0; i &lt; qtd-1; i++)',
+        '    fila[i] = fila[i+1];  <span class="cm">// desloca tudo: O(n)</span>',
+        '  qtd--; <span class="kw">return</span> v;',
+        '}'
+      ], hl);
+    }
+  },
+
+  draw() {
+    const ring = document.getElementById('qRing');
+    ring.innerHTML = '';
+    for (let i = 0; i < this.cap(); i++) {
+      const filled = this.arr[i] !== null;
+      const isF = this.count > 0 && i === this.front;
+      const isR = this.count > 0 && i === this.rear;
+      let cls = 'box' + (filled ? ' filled' : '');
+      if (isF && isR) cls += ' both'; else if (isF) cls += ' front'; else if (isR) cls += ' rear';
+      const tag = isF && isR ? 'início/fim' : isF ? 'início' : isR ? 'fim' : '';
+      ring.insertAdjacentHTML('beforeend',
+        `<div class="cell"><div class="tag">${tag}</div><div class="${cls}">${filled ? this.arr[i] : '—'}</div><div class="i">[${i}]</div></div>`);
+    }
+    if (this.type() === 'circular' && this.cap() > 0) {
+      ring.insertAdjacentHTML('beforeend', `<div class="cell" style="width:110px"><div class="tag"></div><div style="height:56px;display:flex;align-items:center;justify-content:center;font-size:.72em;color:#888;text-align:center">↩ volta<br>para [0]</div><div class="i"></div></div>`);
+    }
+    document.getElementById('qFront').textContent = this.count ? this.front : '—';
+    document.getElementById('qRear').textContent = this.count ? this.rear : '—';
+    document.getElementById('qCount').textContent = this.count;
+    document.getElementById('qShifts').textContent = this.shifts;
+  }
+};
+Q.reset();
+
+/* ================= MEMÓRIA ================= */
+const M = {
+  HEAP: 32, heap: [], frames: [], blocks: [], nextId: 1, fnCount: 0,
+
+  reset() {
+    this.heap = new Array(this.HEAP).fill(null); this.frames = []; this.blocks = []; this.nextId = 1; this.fnCount = 0;
+    document.getElementById('mLog').innerHTML = ''; document.getElementById('mLog').dataset.empty = '1';
+    narr('mNarr', 'Memória reiniciada. A stack está vazia e o heap todo livre.');
+    this.draw(); this.code(-1);
+  },
+
+  callFn() {
+    const nomes = ['main', 'processa', 'calcula', 'auxiliar', 'valida', 'formata'];
+    const nome = nomes[Math.min(this.frames.length, nomes.length - 1)];
+    this.frames.push({ nome, locals: [{ n: 'i', v: Math.floor(Math.random() * 10) }], ptrs: [] });
+    this.fnCount++;
+    narr('mNarr', `<b>${nome}()</b> foi chamada: a CPU empilhou um <i>stack frame</i> com o endereço de retorno e as variáveis locais. Isso é <b>automático</b> — nenhuma linha de código pediu essa alocação.`);
+    log('mLog', `chamada ${nome}() → frame empilhado (profundidade ${this.frames.length})`, 'ok');
+    this.code(0); this.draw();
+  },
+
+  returnFn() {
+    if (!this.frames.length) { narr('mNarr', 'A stack já está vazia.'); return; }
+    const f = this.frames.pop();
+    const perdidos = f.ptrs.filter(id => this.blocks.find(b => b.id === id && !b.freed));
+    perdidos.forEach(id => { const b = this.blocks.find(x => x.id === id); if (b) b.leaked = true; });
+    narr('mNarr', perdidos.length
+      ? `<b>${f.nome}()</b> retornou e o frame foi desempilhado — as locais sumiram sozinhas. Mas ${perdidos.length} bloco(s) do heap continuam alocados e <b>o único ponteiro para eles foi destruído junto com o frame</b>. Isso é um <b>vazamento de memória</b>: espaço ocupado que ninguém consegue mais liberar.`
+      : `<b>${f.nome}()</b> retornou. O frame saiu da stack e todas as suas variáveis locais deixaram de existir automaticamente. Nada vazou.`);
+    log('mLog', `retorno de ${f.nome}()` + (perdidos.length ? ` → ${perdidos.length} VAZAMENTO(S)` : ' → limpo'), perdidos.length ? 'err' : 'ok');
+    this.code(1); this.draw();
+  },
+
+  malloc() {
+    const size = parseInt(document.getElementById('mSize').value) || 4;
+    let start = -1, run = 0;
+    for (let i = 0; i < this.HEAP; i++) {
+      if (this.heap[i] === null) { if (run === 0) start = i; run++; if (run === size) break; }
+      else { run = 0; start = -1; }
+    }
+    if (run < size) {
+      const livres = this.heap.filter(c => c === null).length;
+      narr('mNarr', `❌ <code>malloc(${size})</code> devolveu <b>NULL</b>. Há ${livres} células livres no total, mas nenhuma sequência <b>contígua</b> de ${size}. Isso é <b>fragmentação externa</b> — a memória existe, mas está picotada.`);
+      log('mLog', `malloc(${size}) → NULL (fragmentação: ${livres} livres, mas espalhadas)`, 'err');
+      this.code(3); this.draw(); return;
+    }
+    const id = this.nextId++;
+    for (let i = start; i < start + size; i++) this.heap[i] = id;
+    this.blocks.push({ id, start, size, freed: false, leaked: false });
+    if (this.frames.length) this.frames[this.frames.length - 1].ptrs.push(id);
+    narr('mNarr', `<code>ptr${id} = malloc(${size})</code> → o alocador varreu o heap e usou a <b>primeira lacuna</b> que coube (estratégia <i>first-fit</i>), começando em ${hex(0x7000 + start * 8)}. ` +
+      (this.frames.length ? `O ponteiro foi guardado numa variável local de <b>${this.frames[this.frames.length - 1].nome}()</b> — se a função retornar sem <code>free</code>, esse bloco vaza.` : '⚠️ Não há frame na stack para guardar o ponteiro: esse endereço já nasce órfão.'));
+    log('mLog', `malloc(${size}) → ptr${id} em ${hex(0x7000 + start * 8)}`, 'ok');
+    this.code(2); this.draw();
+  },
+
+  free() {
+    const alive = this.blocks.filter(b => !b.freed);
+    if (!alive.length) { narr('mNarr', 'Não há blocos alocados para liberar.'); return; }
+    const b = alive[Math.floor(Math.random() * alive.length)];
+    for (let i = b.start; i < b.start + b.size; i++) this.heap[i] = null;
+    b.freed = true; b.leaked = false;
+    this.frames.forEach(f => f.ptrs = f.ptrs.filter(id => id !== b.id));
+    const livres = this.heap.filter(c => c === null).length;
+    narr('mNarr', `<code>free(ptr${b.id})</code> devolveu ${b.size} células ao heap. Repare que o <b>ponteiro em si não foi apagado</b> — em C ele continua com o endereço antigo e vira um <i>ponteiro pendurado</i>. Por isso a boa prática é <code>ptr = NULL;</code> logo depois. Livres agora: ${livres}/${this.HEAP}.`);
+    log('mLog', `free(ptr${b.id}) → ${b.size} células devolvidas`, 'warn');
+    this.code(4); this.draw();
+  },
+
+  code(hl) {
+    codeBlock('mCode', [
+      '<span class="kw">void</span> <span class="fn">processa</span>() {   <span class="cm">// frame entra na STACK</span>',
+      '  <span class="kw">int</span> i = 0;      <span class="cm">// local: some sozinha no return</span>',
+      '  <span class="kw">int</span>* p = <span class="fn">malloc</span>(4 * <span class="kw">sizeof</span>(<span class="kw">int</span>)); <span class="cm">// HEAP</span>',
+      '  <span class="kw">if</span> (p == NULL) <span class="kw">return</span>;  <span class="cm">// sempre verifique!</span>',
+      '  <span class="fn">free</span>(p);        <span class="cm">// sem isto → vazamento</span>',
+      '  p = NULL;        <span class="cm">// evita ponteiro pendurado</span>',
+      '}'
+    ], hl);
+  },
+
+  draw() {
+    const st = document.getElementById('mStack');
+    st.innerHTML = this.frames.length ? [...this.frames].reverse().map((f, i) => `
+      <div class="frame ${i === 0 ? 'topf' : ''}">
+        <div class="fname">${f.nome}()${i === 0 ? '  ← topo' : ''}</div>
+        <div>locais: ${f.locals.map(l => `${l.n}=${l.v}`).join(', ')}</div>
+        <div>ponteiros: ${f.ptrs.length ? f.ptrs.map(id => 'ptr' + id).join(', ') : '—'}</div>
+      </div>`).join('') : '<p style="color:#999;text-align:center;padding:22px">Stack vazia.</p>';
+
+    const hp = document.getElementById('mHeap');
+    hp.innerHTML = '';
+    for (let i = 0; i < this.HEAP; i++) {
+      const id = this.heap[i];
+      const blk = id ? this.blocks.find(b => b.id === id) : null;
+      const leaked = blk && blk.leaked;
+      const d = document.createElement('div');
+      d.className = 'hcell';
+      if (id) { d.style.background = leaked ? '#e74c3c' : '#667eea'; d.style.color = '#fff'; d.style.borderColor = leaked ? '#c0392b' : '#4c5fd7'; }
+      d.textContent = id ? (leaked ? '💀' : id) : '';
+      d.title = id ? `bloco ${id}${leaked ? ' (vazado)' : ''} — ${hex(0x7000 + i * 8)}` : `livre — ${hex(0x7000 + i * 8)}`;
+      hp.appendChild(d);
+    }
+    let best = 0, run = 0;
+    this.heap.forEach(c => { if (c === null) { run++; best = Math.max(best, run); } else run = 0; });
+    document.getElementById('mBlocks').textContent = this.blocks.filter(b => !b.freed).length;
+    document.getElementById('mUsed').textContent = this.heap.filter(c => c !== null).length;
+    document.getElementById('mGap').textContent = best;
+    document.getElementById('mLeaks').textContent = this.blocks.filter(b => b.leaked && !b.freed).length;
+  }
+};
+M.reset();
+
+/* ================= RECURSÃO ================= */
+const R = {
+  trace: [], idx: 0, stack: [], calls: 0, maxDepth: 0, running: false, paused: false, memo: {},
+
+  spd() { return 260 - parseInt(document.getElementById('rSpeed').value) * 2.3; },
+
+  build() {
+    const type = document.getElementById('rType').value;
+    const n = Math.min(parseInt(document.getElementById('rN').value) || 4, type === 'fib' ? 7 : 8);
+    this.trace = []; this.memo = {};
+    const T = this.trace;
+    const seen = {};
+
+    const fat = (k, d) => {
+      T.push({ t: 'call', label: `fatorial(${k})`, args: `n=${k}`, d });
+      if (k <= 1) { T.push({ t: 'base', label: `fatorial(${k})`, msg: `caso base: n ≤ 1 → retorna 1`, d }); T.push({ t: 'ret', label: `fatorial(${k})`, val: 1, d }); return 1; }
+      T.push({ t: 'wait', label: `fatorial(${k})`, msg: `precisa de fatorial(${k - 1}) antes de multiplicar — o frame fica <b>parado na pilha</b> esperando`, d });
+      const r = fat(k - 1, d + 1) * k;
+      T.push({ t: 'ret', label: `fatorial(${k})`, val: r, msg: `${k} × fatorial(${k - 1}) = ${r}`, d });
+      return r;
+    };
+    const fib = (k, d) => {
+      T.push({ t: 'call', label: `fib(${k})`, args: `n=${k}`, d, dup: seen[k] > 0 });
+      seen[k] = (seen[k] || 0) + 1;
+      if (k <= 1) { T.push({ t: 'base', label: `fib(${k})`, msg: `caso base → retorna ${k}`, d }); T.push({ t: 'ret', label: `fib(${k})`, val: k, d }); return k; }
+      const a = fib(k - 1, d + 1), b = fib(k - 2, d + 1);
+      T.push({ t: 'ret', label: `fib(${k})`, val: a + b, msg: `fib(${k - 1}) + fib(${k - 2}) = ${a} + ${b}`, d });
+      return a + b;
+    };
+    const soma = (k, d) => {
+      T.push({ t: 'call', label: `soma(${k})`, args: `n=${k}`, d });
+      if (k <= 0) { T.push({ t: 'base', label: `soma(0)`, msg: 'caso base → retorna 0', d }); T.push({ t: 'ret', label: `soma(${k})`, val: 0, d }); return 0; }
+      const r = k + soma(k - 1, d + 1);
+      T.push({ t: 'ret', label: `soma(${k})`, val: r, msg: `${k} + soma(${k - 1}) = ${r}`, d });
+      return r;
+    };
+    let movs = 0;
+    const hanoi = (k, a, b, c, d) => {
+      T.push({ t: 'call', label: `hanoi(${k},${a}→${c})`, args: `n=${k}`, d });
+      if (k === 1) { movs++; T.push({ t: 'base', label: `hanoi(1)`, msg: `move disco 1: ${a} → ${c}`, d }); T.push({ t: 'ret', label: `hanoi(${k},${a}→${c})`, val: 1, d }); return; }
+      hanoi(k - 1, a, c, b, d + 1);
+      movs++;
+      T.push({ t: 'base', label: `hanoi(${k})`, msg: `move disco ${k}: ${a} → ${c} (movimento ${movs})`, d });
+      hanoi(k - 1, b, a, c, d + 1);
+      T.push({ t: 'ret', label: `hanoi(${k},${a}→${c})`, val: movs, d });
+    };
+
+    let res;
+    if (type === 'fat') { res = fat(n, 0); this.codeFat(); }
+    else if (type === 'fib') { res = fib(n, 0); this.codeFib(); }
+    else if (type === 'soma') { res = soma(n, 0); this.codeSoma(); }
+    else { hanoi(n, 'A', 'B', 'C', 0); res = movs; this.codeHanoi(); }
+
+    this.result = res; this.idx = 0; this.stack = []; this.calls = 0; this.maxDepth = 0;
+    document.getElementById('rLog').innerHTML = ''; document.getElementById('rLog').dataset.empty = '1';
+    document.getElementById('rResult').textContent = '—';
+    this.drawStack();
+
+    const insight = {
+      fat: '<b>Fatorial</b> gera uma pilha <i>linear</i>: n frames empilhados, um por chamada. Profundidade O(n), e cada frame fica parado esperando o de baixo terminar.',
+      fib: '<b>Fibonacci ingênuo</b> gera uma <i>árvore</i> de chamadas: fib(n-1) e fib(n-2) recalculam os mesmos subproblemas. Os frames marcados 🔁 são repetições. Complexidade O(2ⁿ) — é exatamente o que memoização elimina.',
+      soma: '<b>Soma recursiva</b> é O(n) no tempo e O(n) no <i>espaço</i> por causa da pilha. Um simples <code>for</code> faria o mesmo com O(1) de espaço — recursão nem sempre é grátis.',
+      hanoi: '<b>Torre de Hanói</b> faz 2ⁿ−1 movimentos. A recursão dupla é o que torna a solução curta de escrever e cara de executar.'
+    };
+    document.getElementById('rInsight').innerHTML = insight[type];
+  },
+
+  async run() {
+    if (this.running) return;
+    this.build(); this.running = true; this.paused = false;
+    while (this.idx < this.trace.length && !this.paused) { this.tick(); await sleep(this.spd()); }
+    this.running = false;
+    if (this.idx >= this.trace.length) this.finish();
+  },
+
+  step() {
+    if (!this.trace.length || this.idx >= this.trace.length) this.build();
+    this.paused = true; this.running = false;
+    this.tick();
+    if (this.idx >= this.trace.length) this.finish();
+  },
+
+  pause() { this.paused = true; this.running = false; narr('rNarr', '⏸️ Pausado. Use "Passo a passo" para avançar um evento por vez.'); },
+
+  tick() {
+    const e = this.trace[this.idx++];
+    if (!e) return;
+    if (e.t === 'call') {
+      this.stack.push({ label: e.label, args: e.args, state: 'active', dup: e.dup });
+      this.calls++; this.maxDepth = Math.max(this.maxDepth, this.stack.length);
+      narr('rNarr', `📞 <b>${e.label}</b> foi chamada → novo frame <b>empilhado</b> (profundidade ${this.stack.length}). ${e.dup ? '🔁 <b>Este subproblema já foi calculado antes</b> — trabalho desperdiçado.' : ''}`);
+      log('rLog', `→ chamada ${e.label}` + (e.dup ? '  🔁 repetida' : ''), e.dup ? 'warn' : '');
+    } else if (e.t === 'wait' || e.t === 'base') {
+      if (this.stack.length) this.stack[this.stack.length - 1].note = e.msg;
+      narr('rNarr', (e.t === 'base' ? '🛑 <b>Caso base</b> em ' : '⏳ ') + `<b>${e.label}</b>: ${e.msg}`);
+      if (e.t === 'base') log('rLog', `⏹ ${e.label}: ${e.msg.replace(/<[^>]+>/g, '')}`, 'ok');
+    } else if (e.t === 'ret') {
+      const f = this.stack.pop();
+      narr('rNarr', `↩️ <b>${e.label}</b> retornou <b>${e.val}</b> → frame <b>desempilhado</b>, valor entregue a quem chamou. ${e.msg ? '<br><code>' + e.msg + '</code>' : ''}`);
+      log('rLog', `← ${e.label} retorna ${e.val}`, 'ok');
+      if (this.stack.length) this.stack[this.stack.length - 1].note = `recebeu ${e.val} de ${e.label}`;
+    }
+    this.drawStack();
+  },
+
+  finish() {
+    document.getElementById('rResult').textContent = this.result;
+    narr('rNarr', `✅ Concluído. Pilha vazia novamente. Foram <b>${this.calls} chamadas</b> e profundidade máxima de <b>${this.maxDepth} frames</b> simultâneos. Cada frame ocupa memória real — é por isso que recursão muito profunda causa <i>stack overflow</i>.`);
+  },
+
+  drawStack() {
+    const el = document.getElementById('rStack');
+    el.innerHTML = this.stack.length ? [...this.stack].reverse().map((f, i) => `
+      <div class="rframe ${i === 0 ? 'active' : ''}">
+        <div><b>${f.label}</b>${f.dup ? ' 🔁' : ''}<br>
+        <span style="font-size:.85em;color:#666">${f.args}${f.note ? ' — ' + f.note : ''}</span></div>
+        <div style="color:#999;font-size:.8em">${i === 0 ? 'executando' : 'esperando'}</div>
+      </div>`).join('') : '<p style="color:#999;text-align:center;padding:24px">Pilha vazia.</p>';
+    document.getElementById('rCalls').textContent = this.calls;
+    document.getElementById('rDepth').textContent = this.maxDepth;
+    document.getElementById('rStackN').textContent = this.stack.length;
+  },
+
+  codeFat() { codeBlock('rCode', ['<span class="kw">int</span> <span class="fn">fatorial</span>(<span class="kw">int</span> n) {', '  <span class="kw">if</span> (n &lt;= 1) <span class="kw">return</span> 1;   <span class="cm">// caso base</span>', '  <span class="kw">return</span> n * <span class="fn">fatorial</span>(n-1);', '}']); },
+  codeFib() { codeBlock('rCode', ['<span class="kw">int</span> <span class="fn">fib</span>(<span class="kw">int</span> n) {', '  <span class="kw">if</span> (n &lt;= 1) <span class="kw">return</span> n;    <span class="cm">// caso base</span>', '  <span class="kw">return</span> <span class="fn">fib</span>(n-1) + <span class="fn">fib</span>(n-2);', '}                       <span class="cm">// O(2ⁿ)</span>']); },
+  codeSoma() { codeBlock('rCode', ['<span class="kw">int</span> <span class="fn">soma</span>(<span class="kw">int</span> n) {', '  <span class="kw">if</span> (n &lt;= 0) <span class="kw">return</span> 0;', '  <span class="kw">return</span> n + <span class="fn">soma</span>(n-1);', '}']); },
+  codeHanoi() { codeBlock('rCode', ['<span class="kw">void</span> <span class="fn">hanoi</span>(<span class="kw">int</span> n, <span class="kw">char</span> a, <span class="kw">char</span> b, <span class="kw">char</span> c) {', '  <span class="kw">if</span> (n == 1) { <span class="fn">mover</span>(a, c); <span class="kw">return</span>; }', '  <span class="fn">hanoi</span>(n-1, a, c, b);', '  <span class="fn">mover</span>(a, c);', '  <span class="fn">hanoi</span>(n-1, b, a, c);', '}']); }
+};
+R.codeFat();
+
+/* ================= ORDENAÇÃO ================= */
+const O = {
+  arr: [], sorted: new Set(), cmp: 0, swap: 0, busy: false, marks: {},
+
+  spd() { return 210 - parseInt(document.getElementById('oSpeed').value) * 2; },
+
+  generate(modo) {
+    if (this.busy) return;
+    const n = Math.max(5, Math.min(parseInt(document.getElementById('oSize').value) || 14, 30));
+    this.arr = Array.from({ length: n }, (_, i) => modo ? Math.round((i + 1) * (95 / n)) : Math.floor(Math.random() * 92) + 8);
+    if (modo === 'inverso') this.arr.reverse();
+    if (modo === 'quase') for (let k = 0; k < Math.max(1, Math.floor(n / 8)); k++) {
+      const i = Math.floor(Math.random() * n), j = Math.floor(Math.random() * n);
+      [this.arr[i], this.arr[j]] = [this.arr[j], this.arr[i]];
+    }
+    this.sorted = new Set(); this.cmp = 0; this.swap = 0; this.marks = {};
+    document.getElementById('oN').textContent = n;
+    narr('oNarr', modo === 'inverso' ? 'Array <b>invertido</b>: é o pior caso para Bubble e Insertion. Compare os contadores com o modo "quase ordenado".'
+      : modo === 'quase' ? 'Array <b>quase ordenado</b>: aqui Insertion Sort se aproxima de O(n) e vence algoritmos "melhores" em arrays pequenos.'
+        : 'Array aleatório gerado.');
+    this.draw(); this.showCode();
+  },
+
+  showCode(hl = -1) {
+    const alg = document.getElementById('oAlg').value;
+    const C = {
+      bubble: ['<span class="kw">for</span> (i = 0; i &lt; n-1; i++)', '  <span class="kw">for</span> (j = 0; j &lt; n-i-1; j++)', '    <span class="kw">if</span> (v[j] &gt; v[j+1])', '      <span class="fn">troca</span>(&amp;v[j], &amp;v[j+1]);', '<span class="cm">// se nenhuma troca ocorrer, já está ordenado</span>'],
+      selection: ['<span class="kw">for</span> (i = 0; i &lt; n-1; i++) {', '  min = i;', '  <span class="kw">for</span> (j = i+1; j &lt; n; j++)', '    <span class="kw">if</span> (v[j] &lt; v[min]) min = j;', '  <span class="fn">troca</span>(&amp;v[i], &amp;v[min]); <span class="cm">// 1 troca por passada</span>', '}'],
+      insertion: ['<span class="kw">for</span> (i = 1; i &lt; n; i++) {', '  chave = v[i];', '  j = i - 1;', '  <span class="kw">while</span> (j &gt;= 0 &amp;&amp; v[j] &gt; chave)', '    v[j+1] = v[j--];   <span class="cm">// abre espaço</span>', '  v[j+1] = chave;      <span class="cm">// insere</span>', '}'],
+      merge: ['<span class="kw">void</span> <span class="fn">mergeSort</span>(v, ini, fim) {', '  <span class="kw">if</span> (ini &gt;= fim) <span class="kw">return</span>;  <span class="cm">// caso base</span>', '  meio = (ini + fim) / 2;', '  <span class="fn">mergeSort</span>(v, ini, meio);', '  <span class="fn">mergeSort</span>(v, meio+1, fim);', '  <span class="fn">intercala</span>(v, ini, meio, fim); <span class="cm">// usa vetor extra</span>', '}'],
+      quick: ['<span class="kw">int</span> <span class="fn">particiona</span>(v, ini, fim) {', '  pivo = v[fim]; i = ini - 1;', '  <span class="kw">for</span> (j = ini; j &lt; fim; j++)', '    <span class="kw">if</span> (v[j] &lt; pivo) <span class="fn">troca</span>(&amp;v[++i], &amp;v[j]);', '  <span class="fn">troca</span>(&amp;v[i+1], &amp;v[fim]); <span class="cm">// pivô no lugar final</span>', '  <span class="kw">return</span> i + 1;', '}']
+    };
+    codeBlock('oCode', C[alg], hl);
+  },
+
+  draw() {
+    const box = document.getElementById('oBars');
+    box.innerHTML = '';
+    const max = Math.max(...this.arr, 1);
+    this.arr.forEach((v, i) => {
+      const d = document.createElement('div');
+      let cls = 'bar';
+      if (this.marks[i]) cls += ' ' + this.marks[i];
+      else if (this.sorted.has(i)) cls += ' sorted';
+      d.className = cls;
+      d.style.height = (v / max * 100) + '%';
+      if (this.arr.length <= 20) d.textContent = v;
+      box.appendChild(d);
+    });
+    document.getElementById('oCmp').textContent = this.cmp;
+    document.getElementById('oSwap').textContent = this.swap;
+  },
+
+  async paint(marks, line, msg) {
+    this.marks = marks || {};
+    if (line !== undefined) this.showCode(line);
+    if (msg) narr('oNarr', msg);
+    this.draw();
+    await sleep(this.spd());
+  },
+
+  async start() {
+    if (this.busy || !this.arr.length) return;
+    this.busy = true; document.getElementById('oStart').disabled = true;
+    this.sorted = new Set(); this.cmp = 0; this.swap = 0;
+    const alg = document.getElementById('oAlg').value;
+    if (alg === 'bubble') await this.bubble();
+    else if (alg === 'selection') await this.selection();
+    else if (alg === 'insertion') await this.insertion();
+    else if (alg === 'merge') { await this.mergeSort(0, this.arr.length - 1); }
+    else await this.quick(0, this.arr.length - 1);
+    this.marks = {};
+    for (let i = 0; i < this.arr.length; i++) this.sorted.add(i);
+    this.draw(); this.showCode(-1);
+    narr('oNarr', `✅ Ordenado com <b>${this.cmp} comparações</b> e <b>${this.swap} trocas/escritas</b>. Troque o algoritmo e repita com o mesmo tipo de array para comparar de verdade.`);
+    this.busy = false; document.getElementById('oStart').disabled = false;
+  },
+
+  async bubble() {
+    const n = this.arr.length;
+    for (let i = 0; i < n - 1; i++) {
+      let trocou = false;
+      for (let j = 0; j < n - i - 1; j++) {
+        this.cmp++;
+        await this.paint({ [j]: 'cmp', [j + 1]: 'cmp' }, 2, `Comparando v[${j}]=${this.arr[j]} com v[${j + 1}]=${this.arr[j + 1]}. ${this.arr[j] > this.arr[j + 1] ? 'Fora de ordem → troca.' : 'Já em ordem → segue.'}`);
+        if (this.arr[j] > this.arr[j + 1]) {
+          [this.arr[j], this.arr[j + 1]] = [this.arr[j + 1], this.arr[j]];
+          this.swap++;
+          await this.paint({ [j]: 'swap', [j + 1]: 'swap' }, 3, `Troca feita. O maior valor vai "borbulhando" para a direita.`);
+          trocou = true;
+        }
+      }
+      this.sorted.add(n - i - 1);
+      await this.paint({}, 0, `Fim da passada ${i + 1}: o maior elemento restante chegou à sua <b>posição final</b> (verde).`);
+      if (!trocou) { await this.paint({}, 4, 'Nenhuma troca nesta passada → o array já está ordenado. Essa checagem é o que dá o melhor caso O(n).'); break; }
+    }
+  },
+
+  async selection() {
+    const n = this.arr.length;
+    for (let i = 0; i < n - 1; i++) {
+      let min = i;
+      await this.paint({ [i]: 'pivot' }, 1, `Passada ${i + 1}: procurando o <b>menor</b> valor entre as posições ${i} e ${n - 1}.`);
+      for (let j = i + 1; j < n; j++) {
+        this.cmp++;
+        await this.paint({ [i]: 'pivot', [min]: 'swap', [j]: 'cmp' }, 3, `Menor até agora: v[${min}]=${this.arr[min]}. Comparando com v[${j}]=${this.arr[j]}.`);
+        if (this.arr[j] < this.arr[min]) min = j;
+      }
+      if (min !== i) { [this.arr[i], this.arr[min]] = [this.arr[min], this.arr[i]]; this.swap++; }
+      this.sorted.add(i);
+      await this.paint({}, 4, `Menor valor colocado na posição ${i}. Selection faz <b>no máximo 1 troca por passada</b> — útil quando escrever na memória é caro.`);
+    }
+    this.sorted.add(n - 1);
+  },
+
+  async insertion() {
+    const n = this.arr.length;
+    this.sorted.add(0);
+    for (let i = 1; i < n; i++) {
+      const chave = this.arr[i];
+      let j = i - 1;
+      await this.paint({ [i]: 'pivot' }, 1, `Chave = ${chave}. À esquerda já está ordenado; vamos <b>inserir</b> a chave no lugar certo.`);
+      while (j >= 0 && this.arr[j] > chave) {
+        this.cmp++;
+        this.arr[j + 1] = this.arr[j]; this.swap++;
+        await this.paint({ [j]: 'cmp', [j + 1]: 'swap' }, 4, `v[${j}]=${this.arr[j]} é maior que a chave → desloca uma casa à direita para abrir espaço.`);
+        j--;
+      }
+      if (j >= 0) this.cmp++;
+      this.arr[j + 1] = chave; this.swap++;
+      this.sorted.add(i);
+      await this.paint({ [j + 1]: 'swap' }, 5, `Chave ${chave} inserida na posição ${j + 1}. Se o array já estiver quase ordenado, esse while quase não roda — daí o melhor caso O(n).`);
+    }
+  },
+
+  async mergeSort(ini, fim) {
+    if (ini >= fim) return;
+    const meio = Math.floor((ini + fim) / 2);
+    await this.paint(this.range(ini, fim, 'cmp'), 2, `Dividindo o intervalo [${ini}..${fim}] em [${ini}..${meio}] e [${meio + 1}..${fim}]. Merge Sort <b>divide primeiro, ordena na volta</b>.`);
+    await this.mergeSort(ini, meio);
+    await this.mergeSort(meio + 1, fim);
+    await this.merge(ini, meio, fim);
+  },
+
+  async merge(ini, meio, fim) {
+    const E = this.arr.slice(ini, meio + 1), D = this.arr.slice(meio + 1, fim + 1);
+    let i = 0, j = 0, k = ini;
+    await this.paint(this.range(ini, fim, 'pivot'), 5, `Intercalando [${ini}..${meio}] com [${meio + 1}..${fim}]. Isso exige um <b>vetor auxiliar</b> — é o custo O(n) de espaço do Merge Sort.`);
+    while (i < E.length && j < D.length) {
+      this.cmp++;
+      this.arr[k] = E[i] <= D[j] ? E[i++] : D[j++];
+      this.swap++;
+      await this.paint({ [k]: 'swap' }, 5, `Comparando as frentes das duas metades e copiando o menor para a posição ${k}.`);
+      k++;
+    }
+    while (i < E.length) { this.arr[k] = E[i++]; this.swap++; await this.paint({ [k]: 'swap' }, 5, 'Sobrou na metade esquerda → copia direto.'); k++; }
+    while (j < D.length) { this.arr[k] = D[j++]; this.swap++; await this.paint({ [k]: 'swap' }, 5, 'Sobrou na metade direita → copia direto.'); k++; }
+    for (let x = ini; x <= fim; x++) this.sorted.add(x);
+    await this.paint({}, -1, `Intervalo [${ini}..${fim}] intercalado e ordenado.`);
+  },
+
+  async quick(ini, fim) {
+    if (ini >= fim) { if (ini === fim) this.sorted.add(ini); return; }
+    const pivo = this.arr[fim];
+    let i = ini - 1;
+    await this.paint({ [fim]: 'pivot' }, 1, `Pivô escolhido: v[${fim}] = ${pivo}. Vamos empurrar tudo menor que ele para a esquerda.`);
+    for (let j = ini; j < fim; j++) {
+      this.cmp++;
+      await this.paint({ [fim]: 'pivot', [j]: 'cmp' }, 3, `v[${j}]=${this.arr[j]} ${this.arr[j] < pivo ? '<' : '≥'} pivô ${pivo}. ${this.arr[j] < pivo ? 'Vai para a zona dos menores.' : 'Fica onde está.'}`);
+      if (this.arr[j] < pivo) {
+        i++;
+        [this.arr[i], this.arr[j]] = [this.arr[j], this.arr[i]]; this.swap++;
+        await this.paint({ [fim]: 'pivot', [i]: 'swap', [j]: 'swap' }, 3, 'Troca: o elemento menor entra na fronteira da zona dos menores.');
+      }
+    }
+    [this.arr[i + 1], this.arr[fim]] = [this.arr[fim], this.arr[i + 1]]; this.swap++;
+    this.sorted.add(i + 1);
+    await this.paint({ [i + 1]: 'sorted' }, 4, `Pivô ${pivo} colocado na posição ${i + 1} — essa é a <b>posição definitiva</b> dele. Agora repetimos nos dois lados.`);
+    await this.quick(ini, i);
+    await this.quick(i + 2, fim);
+  },
+
+  range(a, b, cls) { const m = {}; for (let i = a; i <= b; i++) m[i] = cls; return m; }
+};
+O.generate();
+</script>
+</body>
+</html>
