@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hash Maps, Árvores, Heaps e Grafos — Visualizador Interativo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;padding:20px;color:#222}
+.container{max-width:1400px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:34px 20px;text-align:center}
+header h1{font-size:2.2em;margin-bottom:8px}
+header p{opacity:.9}
+.tabs{display:flex;background:#f5f5f5;border-bottom:2px solid #e0e0e0;flex-wrap:wrap}
+.tab-button{flex:1;padding:14px 8px;border:none;background:none;cursor:pointer;font-size:.93em;font-weight:600;color:#333;border-bottom:3px solid transparent;min-width:150px;transition:.2s}
+.tab-button:hover{background:#e8e8e8}
+.tab-button.active{color:#667eea;border-bottom-color:#667eea;background:#fff}
+.content{padding:28px;display:none}
+.content.active{display:block}
+.section-title{font-size:1.6em;margin-bottom:6px;border-bottom:3px solid #667eea;padding-bottom:10px}
+.subtitle{color:#666;margin:10px 0 18px;font-size:.95em}
+.controls{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+input[type=number],input[type=text],select{padding:9px;border:2px solid #ddd;border-radius:6px;font-size:.95em}
+input:focus,select:focus{outline:none;border-color:#667eea}
+button{padding:9px 16px;background:#667eea;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.92em;transition:.2s}
+button:hover:not(:disabled){background:#764ba2;transform:translateY(-1px)}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+button.ghost{background:#fff;color:#667eea;border:2px solid #667eea}
+button.ghost:hover:not(:disabled){background:#667eea;color:#fff}
+button.danger{background:#e74c3c}
+button.danger:hover:not(:disabled){background:#c0392b}
+button.ok{background:#27ae60}
+button.ok:hover:not(:disabled){background:#1e8449}
+.viz{background:#fafafa;border:2px solid #e3e3e3;border-radius:8px;padding:18px;margin:14px 0;overflow-x:auto}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.panel{border:2px solid #e3e3e3;border-radius:8px;padding:16px;background:#fafafa;margin-bottom:14px}
+.panel h3{font-size:1.05em;color:#667eea;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #eee}
+.narration{background:#fff8e1;border-left:5px solid #f6b93b;padding:12px 14px;border-radius:5px;font-family:'Courier New',monospace;font-size:.92em;min-height:48px;line-height:1.5}
+.info-box{background:#e3f2fd;border-left:5px solid #2196f3;padding:14px;border-radius:5px;margin-top:16px;font-size:.93em;line-height:1.65}
+.info-box ul{margin:8px 0 0 20px}
+.code{background:#282a36;color:#f8f8f2;padding:14px;border-radius:6px;font-family:'Courier New',monospace;font-size:.86em;line-height:1.7;overflow-x:auto}
+.code .ln{display:block;padding:1px 6px;border-radius:3px;white-space:pre}
+.code .ln.hl{background:#ffd54f;color:#222;font-weight:bold}
+.kw{color:#ff79c6}.fn{color:#8be9fd}.st{color:#f1fa8c}.nu{color:#bd93f9}.cm{color:#6272a4}
+.log{background:#fff;border:2px solid #e3e3e3;border-radius:8px;padding:10px;max-height:230px;overflow-y:auto;font-family:'Courier New',monospace;font-size:.85em}
+.log-item{padding:7px 9px;margin-bottom:5px;border-left:4px solid #667eea;background:#f4f4ff;border-radius:4px;animation:sl .25s}
+.log-item.warn{border-left-color:#e67e22;background:#fdf1e5}
+.log-item.err{border-left-color:#e74c3c;background:#fdecea}
+.log-item.ok{border-left-color:#27ae60;background:#eaf7ef}
+@keyframes sl{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+.stat-row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.stat{background:#fff;border:2px solid #667eea;border-radius:6px;padding:8px 14px;font-size:.88em}
+.stat b{display:block;font-size:1.3em;color:#667eea}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.85em;margin:10px 0}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:15px;height:15px;border-radius:3px;display:inline-block}
+.chip{display:inline-block;background:#667eea;color:#fff;padding:4px 10px;border-radius:12px;margin:3px;font-family:monospace;font-weight:bold;font-size:.85em}
+/* hashmap */
+.hbuckets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.hbucket{border:2px solid #667eea;border-radius:6px;padding:8px;background:#fff;min-height:64px;font-family:monospace;font-size:.8em;transition:.2s}
+.hbucket.target{border-color:#f39c12;box-shadow:0 0 0 3px #fde3b8}
+.hbucket.cmp{border-color:#e67e22;background:#fef5e7}
+.hbucket.new{border-color:#27ae60;background:#eafaf1}
+.hbucket.found{border-color:#16a085;background:#e8f8f5}
+.hbucket.single.occ{background:#f0f2ff}
+.hb-idx{font-weight:bold;color:#667eea;margin-bottom:4px}
+.hb-entry{background:#eef;padding:2px 5px;border-radius:3px;margin-right:3px;display:inline-block;margin-bottom:2px}
+.hb-empty{color:#bbb}
+/* heap array */
+.heaprow{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.hbox{width:54px;text-align:center;font-family:monospace}
+.hbox .hbv{height:46px;border:3px solid #667eea;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:bold;background:#eef;transition:.2s}
+.hbox.cmp .hbv{border-color:#e67e22;background:#fef5e7}
+.hbox.new .hbv{border-color:#27ae60;background:#eafaf1}
+.hbox .hbi{font-size:.72em;color:#888;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>🎓 Hash Maps · Árvores · Heaps · Grafos</h1>
+<p>Visualizador passo a passo — o algoritmo de verdade rodando, não uma animação pré-gravada</p>
+</header>
+
+<div class="tabs">
+<button class="tab-button active" data-tab="hashmap">Hash Maps</button>
+<button class="tab-button" data-tab="arvores">Árvores &amp; Heaps</button>
+<button class="tab-button" data-tab="balanceadas">Árvores Balanceadas</button>
+<button class="tab-button" data-tab="grafos">Grafos &amp; Busca</button>
+</div>
+
+<!-- ================= HASH MAPS ================= -->
+<div id="hashmap" class="content active">
+<h2 class="section-title">🗂️ Hash Maps</h2>
+<p class="subtitle">Uma função hash transforma a chave num índice de array. O interessante é o que acontece quando duas chaves caem no mesmo lugar.</p>
+
+<div class="controls">
+<select id="hStrategy" onchange="HM.init()">
+<option value="chain">Encadeamento (chaining)</option>
+<option value="open">Endereçamento aberto (linear probing)</option>
+</select>
+<input type="text" id="hKey" placeholder="chave" value="gato" style="width:110px">
+<input type="text" id="hVal" placeholder="valor" value="7" style="width:80px">
+<button onclick="HM.insert()">Inserir</button>
+<button class="ghost" onclick="HM.search()">Buscar</button>
+<button class="ghost" onclick="HM.remove()">Remover</button>
+<label style="font-weight:600">Velocidade:</label>
+<input type="range" id="hSpeed" min="1" max="100" value="60" style="width:110px">
+<button class="danger" onclick="HM.init()">Reiniciar</button>
+</div>
+
+<div class="narration" id="hNarr">Hash map vazio, capacidade 8. Insira uma chave para ver o cálculo do hash.</div>
+
+<div class="stat-row">
+<div class="stat">Capacidade<b id="hCap">8</b></div>
+<div class="stat">Elementos<b id="hCount">0</b></div>
+<div class="stat">Fator de carga<b id="hLoad">0.00</b></div>
+<div class="stat">Colisões<b id="hColl">0</b></div>
+</div>
+
+<div class="viz"><div class="hbuckets" id="hBuckets"></div></div>
+
+<div class="legend">
+<span><i class="sw" style="background:#f39c12"></i>bucket alvo (hash calculado)</span>
+<span><i class="sw" style="background:#e67e22"></i>comparando / sondando</span>
+<span><i class="sw" style="background:#27ae60"></i>gravado agora</span>
+<span><i class="sw" style="background:#16a085"></i>encontrado</span>
+</div>
+
+<div class="grid2">
+<div class="panel"><h3>📖 Código</h3><div class="code" id="hCode"></div></div>
+<div class="panel"><h3>📝 Histórico</h3><div class="log" id="hLog">Nenhuma operação ainda.</div></div>
+</div>
+
+<div class="info-box">
+<b>O que torna O(1) possível:</b> em vez de comparar a chave com cada elemento (como numa lista), o hash calcula <i>diretamente</i> onde ela deveria estar. O preço é lidar com colisões e, de vez em quando, redimensionar a tabela.
+<ul>
+<li>Aqui o hash é simplificado (soma de códigos ASCII) só para caber na tela — por isso "roma" e "amor" sempre colidem. Hashes reais (djb2, FNV, MurmurHash) multiplicam cada caractere por um primo elevado à posição, exatamente para evitar isso.</li>
+<li>No endereçamento aberto, remover não pode simplesmente esvaziar o slot — vira uma <b>lápide (tombstone)</b>, senão a sondagem de outras chaves pararia cedo demais.</li>
+<li>É a estrutura por trás de <code>dict</code> (Python), <code>Object</code>/<code>Map</code> (JS), <code>HashMap</code> (Java) e índices de bancos de dados.</li>
+</ul>
+</div>
+</div>
+
+<!-- ================= ÁRVORES & HEAPS ================= -->
+<div id="arvores" class="content">
+<h2 class="section-title">🌳 Árvores e Heaps</h2>
+<p class="subtitle">Duas estruturas em forma de árvore com propriedades diferentes: BST mantém ordem total; Heap só garante prioridade entre pai e filho.</p>
+
+<div class="controls">
+<select id="tMode" onchange="TH.setMode()">
+<option value="bst">Árvore Binária de Busca (BST)</option>
+<option value="heap">Heap</option>
+</select>
+<span id="tHeapTypeWrap" style="display:none">
+<select id="tHeapType" onchange="TH.setHeapType()">
+<option value="max">Max-Heap</option>
+<option value="min">Min-Heap</option>
+</select>
+</span>
+<input type="number" id="tVal" value="50" style="width:80px">
+<button onclick="TH.insert()">Inserir</button>
+<span id="tBstControls">
+<button class="ghost" onclick="TH.search()">Buscar</button>
+<button class="ghost" onclick="TH.remove()">Remover</button>
+</span>
+<span id="tHeapControls" style="display:none">
+<button class="ghost" onclick="TH.heapExtract()">Extrair raiz</button>
+</span>
+<button class="danger" onclick="TH.clear()">Limpar</button>
+</div>
+
+<div class="controls" id="tTraversalWrap">
+<label style="font-weight:600">Percursos:</label>
+<button class="ghost" onclick="TH.traverse('in')">Em ordem</button>
+<button class="ghost" onclick="TH.traverse('pre')">Pré-ordem</button>
+<button class="ghost" onclick="TH.traverse('post')">Pós-ordem</button>
+<button class="ghost" onclick="TH.traverse('level')">Em nível (fila)</button>
+<label style="font-weight:600">Velocidade:</label>
+<input type="range" id="tSpeed" min="1" max="100" value="60" style="width:110px">
+</div>
+
+<div class="narration" id="tNarr">Árvore vazia. Insira valores.</div>
+
+<div class="stat-row">
+<div class="stat">Nós<b id="tCount">0</b></div>
+<div class="stat">Altura<b id="tHeight">0</b></div>
+<div class="stat">Comparações<b id="tCmp">0</b></div>
+</div>
+
+<div class="viz">
+<svg id="tSvg" width="100%" height="280"></svg>
+<div id="tHeapArrWrap" style="display:none">
+<div style="font-size:.85em;color:#666;margin-top:8px">Representação em array (é assim que o heap é guardado de verdade):</div>
+<div class="heaprow" id="tHeapArr"></div>
+</div>
+<div id="tSeq" style="margin-top:10px"></div>
+</div>
+
+<div class="legend">
+<span><i class="sw" style="background:#e67e22"></i>comparando</span>
+<span><i class="sw" style="background:#27ae60"></i>novo / visitado</span>
+<span><i class="sw" style="background:#16a085"></i>encontrado</span>
+<span><i class="sw" style="background:#e74c3c"></i>removido</span>
+</div>
+
+<div class="grid2">
+<div class="panel"><h3>📖 Código</h3><div class="code" id="tCode"></div></div>
+<div class="panel"><h3>📝 Histórico</h3><div class="log" id="tLog">Nenhuma operação ainda.</div></div>
+</div>
+
+<div class="info-box">
+<b>BST e Heap não são a mesma coisa:</b> a BST mantém <i>ordem total</i> (esquerda &lt; nó &lt; direita) — por isso percorrer <b>em ordem</b> sempre devolve a sequência ordenada, mas ela pode ficar desbalanceada (veja a próxima aba). O Heap só garante a relação entre <b>pai e filho</b>, nunca entre irmãos — não serve para busca, mas por ser uma árvore <b>completa</b> (guardada num array, sem ponteiros) insere e extrai o extremo sempre em O(log n).
+</div>
+</div>
+
+<!-- ================= ÁRVORES BALANCEADAS ================= -->
+<div id="balanceadas" class="content">
+<h2 class="section-title">⚖️ Árvores Balanceadas (AVL)</h2>
+<p class="subtitle">Toda BST pode degenerar numa lista se os valores chegarem em ordem. A AVL evita isso: depois de cada inserção, confere o fator de balanceamento e gira a árvore quando necessário.</p>
+
+<div class="controls">
+<select id="avMode" onchange="AV.setMode()">
+<option value="avl">AVL (com balanceamento)</option>
+<option value="plain">BST simples (sem balanceamento)</option>
+</select>
+<input type="number" id="avVal" value="50" style="width:80px">
+<button onclick="AV.insert()">Inserir</button>
+<button class="ok" onclick="AV.seqDemo()">▶️ Demo: inserir 1→7 em sequência</button>
+<label style="font-weight:600">Velocidade:</label>
+<input type="range" id="avSpeed" min="1" max="100" value="60" style="width:110px">
+<button class="danger" onclick="AV.clear()">Limpar</button>
+</div>
+
+<div class="narration" id="avNarr">Escolha o modo e insira valores. Experimente a demo 1→7 para comparar altura com e sem balanceamento.</div>
+
+<div class="stat-row">
+<div class="stat">Nós<b id="avCount">0</b></div>
+<div class="stat">Altura<b id="avHeight">0</b></div>
+<div class="stat">FB da raiz<b id="avRootBF">0</b></div>
+</div>
+
+<div class="viz"><svg id="avSvg" width="100%" height="280"></svg></div>
+
+<div class="legend">
+<span><i class="sw" style="background:#e67e22"></i>comparando</span>
+<span><i class="sw" style="background:#27ae60"></i>novo</span>
+<span><i class="sw" style="background:#8e44ad"></i>rotação acontecendo</span>
+</div>
+
+<div class="grid2">
+<div class="panel"><h3>📖 Código</h3><div class="code" id="avCode"></div></div>
+<div class="panel"><h3>📝 Histórico</h3><div class="log" id="avLog">Nenhuma operação ainda.</div></div>
+</div>
+
+<div class="info-box">
+<b>Os quatro casos de rotação</b> (fb = fator de balanceamento = altura(esquerda) − altura(direita)):
+<ul>
+<li><b>Esquerda-Esquerda (fb&gt;1):</b> uma rotação simples à direita</li>
+<li><b>Direita-Direita (fb&lt;-1):</b> uma rotação simples à esquerda</li>
+<li><b>Esquerda-Direita:</b> rotação à esquerda no filho, depois à direita no nó</li>
+<li><b>Direita-Esquerda:</b> rotação à direita no filho, depois à esquerda no nó</li>
+</ul>
+Cada rotação é O(1) — só religa 3 ponteiros. Por isso manter uma AVL balanceada custa pouco a cada inserção, mas garante busca sempre O(log n). É a base de índices de banco de dados e do <code>TreeMap</code> em Java (que usa a prima Red-Black, com a mesma ideia de rotações).
+</div>
+</div>
+
+<!-- ================= GRAFOS & BUSCA ================= -->
+<div id="grafos" class="content">
+<h2 class="section-title">🕸️ Grafos e Busca</h2>
+<p class="subtitle">Mesmo grafo, três algoritmos diferentes: BFS usa fila, DFS usa pilha, Dijkstra usa uma tabela de distâncias provisórias.</p>
+
+<div class="controls">
+<label style="font-weight:600">Início:</label>
+<select id="gStart"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>
+<button onclick="G.bfs()">▶️ BFS</button>
+<button class="ghost" onclick="G.dfs()">▶️ DFS</button>
+<button class="ghost" onclick="G.dijkstra()">▶️ Dijkstra (menor caminho)</button>
+<label style="font-weight:600">Velocidade:</label>
+<input type="range" id="gSpeed" min="1" max="100" value="60" style="width:110px">
+</div>
+<div class="controls">
+<label style="font-weight:600">Destino (após o Dijkstra):</label>
+<select id="gTarget"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option selected>H</option></select>
+<button class="ok" onclick="G.showPath()">Mostrar caminho até o destino</button>
+</div>
+
+<div class="narration" id="gNarr">Escolha um nó de início e um algoritmo.</div>
+
+<div class="viz"><svg id="gSvg" width="100%" height="400"></svg></div>
+
+<div class="panel"><div id="gQS" style="font-family:monospace;font-size:.9em">Fila/Pilha/Distâncias aparecem aqui durante a execução.</div></div>
+
+<div class="legend">
+<span><i class="sw" style="background:#667eea"></i>não visitado</span>
+<span><i class="sw" style="background:#f1c40f"></i>na fronteira (fila/pilha)</span>
+<span><i class="sw" style="background:#e67e22"></i>processando agora</span>
+<span><i class="sw" style="background:#27ae60"></i>visitado</span>
+</div>
+
+<div class="grid2">
+<div class="panel"><h3>📖 Código</h3><div class="code" id="gCode"></div></div>
+<div class="panel"><h3>📝 Histórico</h3><div class="log" id="gLog">Nenhuma execução ainda.</div></div>
+</div>
+
+<div class="info-box">
+<b>BFS vs DFS vs Dijkstra:</b>
+<ul>
+<li><b>BFS</b> (fila) — caminho mais curto em <i>número de arestas</i>. Usado em redes sociais ("amigos de amigos"), roteadores de rede.</li>
+<li><b>DFS</b> (pilha) — mergulha fundo antes de voltar. Usado em detecção de ciclos, ordenação topológica, resolver labirintos.</li>
+<li><b>Dijkstra</b> (fila de prioridade) — caminho mais <i>barato</i> quando as arestas têm peso. É o que roda por trás de GPS e roteamento de pacotes.</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<script>
+/* ================= UTIL ================= */
+const sleep = ms => new Promise(r => setTimeout(r, Math.max(10, ms)));
+function log(id, msg, cls = '') {
+  const el = document.getElementById(id);
+  if (el.dataset.empty !== '0') { el.innerHTML = ''; el.dataset.empty = '0'; }
+  const d = document.createElement('div');
+  d.className = 'log-item ' + cls;
+  d.innerHTML = msg;
+  el.insertBefore(d, el.firstChild);
+  while (el.children.length > 25) el.removeChild(el.lastChild);
+}
+function narr(id, msg) { document.getElementById(id).innerHTML = msg; }
+function codeBlock(id, lines, hl = -1) {
+  document.getElementById(id).innerHTML = lines.map((l, i) => `<span class="ln${i === hl ? ' hl' : ''}">${l}</span>`).join('');
+}
+document.querySelectorAll('.tab-button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab-button').forEach(c => c.classList.remove('active'));
+  document.getElementById(b.dataset.tab).classList.add('active');
+  b.classList.add('active');
+}));
+
+/* ================= ÁRVORE: LAYOUT E DESENHO (compartilhado) ================= */
+function layoutTree(root) {
+  const nodes = [], edgeList = [];
+  let counter = 0, maxDepth = 0;
+  function walk(node, depth, parentId) {
+    if (!node) return;
+    walk(node.left, depth + 1, node.id);
+    const xIndex = counter++;
+    nodes.push({ ref: node, depth, xIndex });
+    maxDepth = Math.max(maxDepth, depth);
+    if (parentId != null) edgeList.push([parentId, node.id]);
+    walk(node.right, depth + 1, node.id);
+  }
+  walk(root, 0, null);
+  return { nodes, edgeList, width: counter, maxDepth };
+}
+function drawTreeSVG(svgId, root, opts = {}) {
+  const svg = document.getElementById(svgId);
+  if (!root) { svg.innerHTML = `<text x="20" y="40" font-family="monospace" fill="#aaa">árvore vazia</text>`; svg.setAttribute('viewBox', '0 0 300 80'); return; }
+  const { nodes, edgeList, width, maxDepth } = layoutTree(root);
+  const spacingX = 68, spacingY = 76, marginX = 40, marginY = 36;
+  const W = marginX * 2 + Math.max(width - 1, 0) * spacingX + 40;
+  const H = marginY * 2 + maxDepth * spacingY + 40;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W);
+  const pos = {};
+  nodes.forEach(n => { pos[n.ref.id] = { x: marginX + n.xIndex * spacingX, y: marginY + n.depth * spacingY }; });
+  let s = '';
+  edgeList.forEach(([pId, cId]) => {
+    const p = pos[pId], c = pos[cId];
+    s += `<line x1="${p.x}" y1="${p.y}" x2="${c.x}" y2="${c.y}" stroke="#b8b8d9" stroke-width="2.5"/>`;
+  });
+  nodes.forEach(n => {
+    const p = pos[n.ref.id];
+    const cls = (opts.highlight && opts.highlight[n.ref.id]) || '';
+    const fill = cls === 'new' ? '#27ae60' : cls === 'cmp' ? '#e67e22' : cls === 'found' ? '#16a085' : cls === 'rot' ? '#8e44ad' : cls === 'removed' ? '#e74c3c' : '#667eea';
+    s += `<circle cx="${p.x}" cy="${p.y}" r="24" fill="${fill}" stroke="#333" stroke-width="1.5"/>`;
+    s += `<text x="${p.x}" y="${p.y + 5}" text-anchor="middle" font-size="15" font-weight="bold" fill="#fff">${n.ref.val}</text>`;
+    if (opts.showBF) s += `<text x="${p.x}" y="${p.y - 30}" text-anchor="middle" font-size="11" font-family="monospace" font-weight="bold" fill="#8e44ad">fb=${avlBF(n.ref)}</text>`;
+    if (opts.showIdx) s += `<text x="${p.x}" y="${p.y + 42}" text-anchor="middle" font-size="10" font-family="monospace" fill="#888">[${n.ref.idx}]</text>`;
+  });
+  svg.innerHTML = s;
+}
+function drawHeapArray(containerId, arr, highlight = {}) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = arr.length ? arr.map((v, i) => `<div class="hbox ${highlight[i] || ''}"><div class="hbv">${v}</div><div class="hbi">[${i}]</div></div>`).join('') : '<p style="color:#999">vazio</p>';
+}
+
+/* ================= HASH MAP ================= */
+function hashOf(key, cap) {
+  let sum = 0;
+  for (let i = 0; i < key.length; i++) sum += key.charCodeAt(i);
+  return { sum, idx: sum % cap };
+}
+const HM = {
+  capacity: 8, buckets: [], strategy: 'chain', count: 0, collisions: 0, busy: false,
+
+  spd() { return 230 - parseInt(document.getElementById('hSpeed').value) * 2; },
+
+  init() {
+    this.strategy = document.getElementById('hStrategy').value;
+    this.capacity = 8;
+    this.buckets = this.strategy === 'chain' ? Array.from({ length: this.capacity }, () => []) : new Array(this.capacity).fill(null);
+    this.count = 0; this.collisions = 0;
+    document.getElementById('hLog').innerHTML = ''; document.getElementById('hLog').dataset.empty = '1';
+    narr('hNarr', 'Hash map vazio, capacidade 8. Insira uma chave para ver o cálculo do hash.');
+    this.codeHM('insert', -1);
+    this.draw(); this.stats();
+  },
+
+  async insert() {
+    if (this.busy) return; this.busy = true;
+    const key = (document.getElementById('hKey').value || '').trim();
+    const value = document.getElementById('hVal').value || '';
+    if (!key) { narr('hNarr', 'Digite uma chave.'); this.busy = false; return; }
+    const { sum, idx } = hashOf(key, this.capacity);
+    this.codeHM('insert', 1);
+    narr('hNarr', `<code>hash("${key}")</code> = soma dos códigos ASCII (${sum}) <code>% ${this.capacity}</code> = <b>${idx}</b>. Esse é o bucket de destino.`);
+    this.draw({ [idx]: 'target' }); await sleep(this.spd());
+
+    if (this.strategy === 'chain') {
+      const bucket = this.buckets[idx];
+      const existing = bucket.find(e => e.key === key);
+      if (existing) {
+        existing.value = value;
+        narr('hNarr', `Chave "${key}" já existia no bucket ${idx} → valor atualizado.`);
+        log('hLog', `insere("${key}") → atualizado no bucket ${idx}`, 'ok');
+      } else {
+        if (bucket.length > 0) { this.collisions++; narr('hNarr', `Bucket ${idx} já tem ${bucket.length} entrada(s) → <b>colisão</b>. Encadeamento resolve <b>anexando</b> ao final da lista do bucket — nada se move.`); await sleep(this.spd()); }
+        bucket.push({ key, value }); this.count++;
+        log('hLog', `insere("${key}", ${value}) → bucket ${idx}${bucket.length > 1 ? ' (colisão, cadeia de ' + bucket.length + ')' : ''}`, bucket.length > 1 ? 'warn' : 'ok');
+      }
+      this.draw({ [idx]: 'new' });
+    } else {
+      let i = idx, probes = 0, firstTomb = -1;
+      while (probes < this.capacity) {
+        const slot = this.buckets[i];
+        if (slot === null) break;
+        if (slot.deleted) { if (firstTomb === -1) firstTomb = i; probes++; i = (i + 1) % this.capacity; continue; }
+        if (slot.key === key) break;
+        this.collisions++;
+        this.draw({ [i]: 'cmp' });
+        narr('hNarr', `Slot ${i} ocupado por "${slot.key}" ≠ "${key}" → <b>sondagem linear</b>: tenta o próximo (${(i + 1) % this.capacity}).`);
+        await sleep(this.spd());
+        probes++; i = (i + 1) % this.capacity;
+      }
+      if (probes >= this.capacity && !(this.buckets[i] && this.buckets[i].key === key && !this.buckets[i].deleted)) {
+        narr('hNarr', `❌ Tabela cheia — nenhum slot livre. É hora de dar resize.`);
+        this.busy = false; return;
+      }
+      const target = firstTomb !== -1 ? firstTomb : i;
+      if (this.buckets[target] && this.buckets[target].key === key && !this.buckets[target].deleted) {
+        this.buckets[target] = { key, value };
+        narr('hNarr', `Chave "${key}" já existia no slot ${target} → valor atualizado.`);
+        log('hLog', `insere("${key}") → atualizado no slot ${target}`, 'ok');
+      } else {
+        this.buckets[target] = { key, value }; this.count++;
+        narr('hNarr', `"${key}" gravado no slot <b>${target}</b>${target !== idx ? ` (após ${probes} sondagem(ns) a partir de ${idx})` : ''}.`);
+        log('hLog', `insere("${key}", ${value}) → slot ${target}`, target !== idx ? 'warn' : 'ok');
+      }
+      this.draw({ [target]: 'new' });
+    }
+    this.stats();
+    if (this.count / this.capacity > 0.75) await this.resize();
+    this.busy = false;
+  },
+
+  async search() {
+    if (this.busy) return; this.busy = true;
+    const key = (document.getElementById('hKey').value || '').trim();
+    const { sum, idx } = hashOf(key, this.capacity);
+    this.codeHM('search', 1);
+    narr('hNarr', `<code>hash("${key}") = ${idx}</code>. Vamos direto a esse bucket — é isso que torna a busca O(1) em média.`);
+    this.draw({ [idx]: 'target' }); await sleep(this.spd());
+    if (this.strategy === 'chain') {
+      const bucket = this.buckets[idx];
+      for (let k = 0; k < bucket.length; k++) {
+        this.codeHM('search', 2);
+        narr('hNarr', `Comparando com "${bucket[k].key}" na cadeia do bucket ${idx} (posição ${k}).`);
+        this.draw({ [idx]: 'cmp' }); await sleep(this.spd());
+        if (bucket[k].key === key) { narr('hNarr', `Encontrado! "${key}" → ${bucket[k].value}.`); log('hLog', `busca("${key}") → ${bucket[k].value}`, 'ok'); this.draw({ [idx]: 'found' }); this.busy = false; return; }
+      }
+      narr('hNarr', `"${key}" não está no bucket ${idx}.`); log('hLog', `busca("${key}") → não encontrado`, 'err');
+    } else {
+      let i = idx, probes = 0;
+      while (probes < this.capacity) {
+        const slot = this.buckets[i];
+        if (slot === null) { narr('hNarr', `Slot ${i} está <b>vazio</b> (nunca ocupado) → a busca pode parar: "${key}" não existe.`); log('hLog', `busca("${key}") → não encontrado`, 'err'); this.draw({}); this.busy = false; return; }
+        if (!slot.deleted && slot.key === key) { narr('hNarr', `Encontrado no slot ${i}! "${key}" → ${slot.value}.`); log('hLog', `busca("${key}") → ${slot.value}`, 'ok'); this.draw({ [i]: 'found' }); this.busy = false; return; }
+        this.draw({ [i]: 'cmp' });
+        narr('hNarr', slot.deleted ? `Slot ${i} tem uma <b>lápide</b> (tombstone) — item removido, mas a sondagem precisa <b>continuar</b>, senão perderíamos itens que ficaram além dele.` : `Slot ${i} tem "${slot.key}" ≠ "${key}" → continua sondando.`);
+        await sleep(this.spd());
+        probes++; i = (i + 1) % this.capacity;
+      }
+      narr('hNarr', `Percorreu a tabela inteira sem achar "${key}".`); log('hLog', `busca("${key}") → não encontrado`, 'err');
+    }
+    this.draw({}); this.busy = false;
+  },
+
+  async remove() {
+    if (this.busy) return; this.busy = true;
+    const key = (document.getElementById('hKey').value || '').trim();
+    const { idx } = hashOf(key, this.capacity);
+    this.codeHM('remove', 1);
+    if (this.strategy === 'chain') {
+      const bucket = this.buckets[idx];
+      const i = bucket.findIndex(e => e.key === key);
+      if (i === -1) { narr('hNarr', `"${key}" não encontrado no bucket ${idx}.`); log('hLog', `remove("${key}") → não encontrado`, 'err'); this.busy = false; return; }
+      bucket.splice(i, 1); this.count--;
+      narr('hNarr', `"${key}" removido da cadeia do bucket ${idx}. Encadeamento remove <b>sem deixar buracos</b>.`);
+      log('hLog', `remove("${key}") → removido do bucket ${idx}`, 'ok');
+    } else {
+      let i = idx, probes = 0, foundAt = -1;
+      while (probes < this.capacity) {
+        const slot = this.buckets[i];
+        if (slot === null) break;
+        if (!slot.deleted && slot.key === key) { foundAt = i; break; }
+        probes++; i = (i + 1) % this.capacity;
+      }
+      if (foundAt === -1) { narr('hNarr', `"${key}" não encontrado.`); log('hLog', `remove("${key}") → não encontrado`, 'err'); this.busy = false; return; }
+      this.buckets[foundAt] = { deleted: true }; this.count--;
+      narr('hNarr', `"${key}" removido do slot ${foundAt} — mas o slot vira uma <b>lápide</b>, não fica null. Se virasse null, a sondagem de outras chaves pararia cedo demais.`);
+      log('hLog', `remove("${key}") → lápide no slot ${foundAt}`, 'warn');
+    }
+    this.stats(); this.draw({}); this.busy = false;
+  },
+
+  async resize() {
+    const oldBuckets = this.buckets, oldCap = this.capacity;
+    this.capacity *= 2;
+    narr('hNarr', `⚠️ Fator de carga passou de 0.75 → <b>resize</b>: capacidade dobra de ${oldCap} para ${this.capacity} e <b>todas as chaves são reespalhadas</b> (rehash), porque o índice de cada uma depende do módulo da capacidade antiga.`);
+    log('hLog', `resize: ${oldCap} → ${this.capacity}, rehash de ${this.count} chaves`, 'warn');
+    await sleep(this.spd() * 2);
+    const entries = [];
+    if (this.strategy === 'chain') oldBuckets.forEach(b => b.forEach(e => entries.push(e)));
+    else oldBuckets.forEach(s => { if (s && !s.deleted) entries.push(s); });
+    this.buckets = this.strategy === 'chain' ? Array.from({ length: this.capacity }, () => []) : new Array(this.capacity).fill(null);
+    for (const e of entries) {
+      const { idx } = hashOf(e.key, this.capacity);
+      if (this.strategy === 'chain') this.buckets[idx].push(e);
+      else { let i = idx; while (this.buckets[i]) i = (i + 1) % this.capacity; this.buckets[i] = e; }
+    }
+    this.draw({}); this.stats();
+  },
+
+  stats() {
+    document.getElementById('hCap').textContent = this.capacity;
+    document.getElementById('hCount').textContent = this.count;
+    document.getElementById('hLoad').textContent = (this.count / this.capacity).toFixed(2);
+    document.getElementById('hColl').textContent = this.collisions;
+  },
+
+  draw(highlight = {}) {
+    const el = document.getElementById('hBuckets');
+    let s = '';
+    for (let i = 0; i < this.capacity; i++) {
+      const cls = highlight[i] || '';
+      if (this.strategy === 'chain') {
+        const chain = this.buckets[i];
+        s += `<div class="hbucket ${cls}"><div class="hb-idx">[${i}]</div><div>${chain.length ? chain.map(e => `<span class="hb-entry">${e.key}:${e.value}</span>`).join('→') : '<span class="hb-empty">vazio</span>'}</div></div>`;
+      } else {
+        const slot = this.buckets[i];
+        const label = !slot ? '<span class="hb-empty">vazio</span>' : slot.deleted ? '🪦 lápide' : `${slot.key}:${slot.value}`;
+        s += `<div class="hbucket single ${cls} ${slot && !slot.deleted ? 'occ' : ''}"><div class="hb-idx">[${i}]</div><div>${label}</div></div>`;
+      }
+    }
+    el.innerHTML = s;
+  },
+
+  codeHM(op, hl) {
+    const C = {
+      insert: ['<span class="kw">void</span> <span class="fn">inserir</span>(chave, valor) {', '  i = <span class="fn">hash</span>(chave) % capacidade;', '  <span class="cm">// chaining: anexa na lista de i</span>', '  <span class="cm">// aberto: sonda i, i+1, i+2... até achar vaga</span>', '  <span class="kw">if</span> (fatorCarga &gt; 0.75) <span class="fn">resize</span>();', '}'],
+      search: ['<span class="kw">valor</span> <span class="fn">buscar</span>(chave) {', '  i = <span class="fn">hash</span>(chave) % capacidade;', '  <span class="kw">while</span> (slot != vazio) {', '    <span class="kw">if</span> (slot.chave == chave) <span class="kw">return</span> slot.valor;', '    i = (i + 1) % capacidade;  <span class="cm">// só no aberto</span>', '  }', '  <span class="kw">return</span> NAO_ENCONTRADO;', '}'],
+      remove: ['<span class="kw">void</span> <span class="fn">remover</span>(chave) {', '  slot = <span class="fn">localizar</span>(chave);', '  <span class="cm">// chaining: desliga da lista</span>', '  <span class="cm">// aberto: NAO pode virar null → vira LAPIDE</span>', '}']
+    };
+    codeBlock('hCode', C[op] || C.insert, hl);
+  }
+};
+HM.init();
+
+/* ================= ÁRVORES & HEAPS ================= */
+const TH = {
+  mode: 'bst', heapType: 'max', root: null, idc: 0, heapArr: [], busy: false, cmp: 0,
+
+  spd() { return 230 - parseInt(document.getElementById('tSpeed').value) * 2; },
+  val() { return parseInt(document.getElementById('tVal').value) || 0; },
+  mkNode(v) { return { id: 'n' + (this.idc++), val: v, left: null, right: null }; },
+
+  setMode() {
+    this.mode = document.getElementById('tMode').value;
+    document.getElementById('tHeapTypeWrap').style.display = this.mode === 'heap' ? 'inline-block' : 'none';
+    document.getElementById('tBstControls').style.display = this.mode === 'bst' ? 'inline' : 'none';
+    document.getElementById('tHeapControls').style.display = this.mode === 'heap' ? 'inline' : 'none';
+    document.getElementById('tTraversalWrap').style.display = this.mode === 'bst' ? 'flex' : 'none';
+    this.clear();
+  },
+  setHeapType() {
+    this.heapType = document.getElementById('tHeapType').value;
+    this.clear();
+    narr('tNarr', `Tipo alterado para ${this.heapType === 'max' ? 'Max-Heap' : 'Min-Heap'}. Heap reiniciado para comparação justa.`);
+  },
+
+  clear() {
+    this.root = null; this.heapArr = []; this.cmp = 0;
+    document.getElementById('tLog').innerHTML = ''; document.getElementById('tLog').dataset.empty = '1';
+    document.getElementById('tSeq').innerHTML = '';
+    narr('tNarr', this.mode === 'bst' ? 'Árvore vazia. Insira valores.' : 'Heap vazio. Insira valores.');
+    this.codeBST('insert', -1);
+    this.draw({}); this.stats();
+  },
+
+  async insert() {
+    if (this.busy) return; this.busy = true;
+    const v = this.val();
+    if (this.mode === 'bst') await this.bstInsert(v);
+    else await this.heapInsert(v);
+    this.busy = false;
+  },
+
+  async bstInsert(v) {
+    this.codeBST('insert', 0);
+    if (!this.root) { this.root = this.mkNode(v); narr('tNarr', `Árvore vazia → <b>${v}</b> vira a raiz.`); log('tLog', `insere(${v}) → raiz`, 'ok'); this.draw({ [this.root.id]: 'new' }); this.stats(); return; }
+    let cur = this.root, comps = 0;
+    while (true) {
+      comps++; this.cmp++;
+      this.draw({ [cur.id]: 'cmp' });
+      if (v === cur.val) { narr('tNarr', `${v} já existe na árvore — BST não permite duplicados.`); log('tLog', `insere(${v}) → já existe`, 'warn'); this.draw({}); return; }
+      this.codeBST('insert', v < cur.val ? 2 : 3);
+      narr('tNarr', `Comparando com o nó <b>${cur.val}</b>: ${v} ${v < cur.val ? '&lt; vai para a esquerda' : '&gt; vai para a direita'}.`);
+      await sleep(this.spd());
+      const next = v < cur.val ? cur.left : cur.right;
+      if (!next) {
+        const n = this.mkNode(v);
+        if (v < cur.val) cur.left = n; else cur.right = n;
+        narr('tNarr', `Espaço vazio encontrado → <b>${v}</b> inserido como filho de ${cur.val}, após ${comps} comparações.`);
+        log('tLog', `insere(${v}) → filho de ${cur.val}, ${comps} comparações`, 'ok');
+        this.draw({ [n.id]: 'new' }); this.stats(); return;
+      }
+      cur = next;
+    }
+  },
+
+  async search() {
+    if (this.busy || this.mode !== 'bst') return; this.busy = true;
+    const v = this.val(); let cur = this.root, comps = 0;
+    this.codeBST('search', 0);
+    if (!cur) { narr('tNarr', 'Árvore vazia.'); this.busy = false; return; }
+    while (cur) {
+      comps++; this.cmp++;
+      this.draw({ [cur.id]: 'cmp' });
+      if (v === cur.val) { narr('tNarr', `Encontrado! ${v} == ${cur.val} após ${comps} comparações.`); this.draw({ [cur.id]: 'found' }); log('tLog', `busca(${v}) → encontrado, ${comps} comparações`, 'ok'); this.stats(); this.busy = false; return; }
+      narr('tNarr', `${v} ${v < cur.val ? '&lt;' : '&gt;'} ${cur.val} → vai para ${v < cur.val ? 'esquerda' : 'direita'}.`);
+      await sleep(this.spd());
+      cur = v < cur.val ? cur.left : cur.right;
+    }
+    narr('tNarr', `${v} não está na árvore. Chegou a um ponteiro NULL após ${comps} comparações — pior caso O(altura).`);
+    log('tLog', `busca(${v}) → não encontrado`, 'err');
+    this.draw({}); this.stats(); this.busy = false;
+  },
+
+  async remove() {
+    if (this.busy || this.mode !== 'bst') return; this.busy = true;
+    const v = this.val();
+    this.codeBST('remove', 0);
+    let parent = null, cur = this.root, isLeft = false;
+    while (cur && cur.val !== v) {
+      this.draw({ [cur.id]: 'cmp' });
+      narr('tNarr', `Procurando ${v}: no nó ${cur.val}, vai para ${v < cur.val ? 'esquerda' : 'direita'}.`);
+      await sleep(this.spd());
+      parent = cur; isLeft = v < cur.val; cur = isLeft ? cur.left : cur.right;
+    }
+    if (!cur) { narr('tNarr', `${v} não encontrado.`); log('tLog', `remove(${v}) → não encontrado`, 'err'); this.draw({}); this.busy = false; return; }
+    this.draw({ [cur.id]: 'removed' }); await sleep(this.spd());
+
+    if (cur.left && cur.right) {
+      narr('tNarr', `<b>${v}</b> tem dois filhos → precisamos do <b>sucessor in-order</b> (menor da subárvore direita) para substituí-lo sem quebrar a ordem.`);
+      let sParent = cur, s = cur.right;
+      while (s.left) { this.draw({ [s.id]: 'cmp' }); await sleep(this.spd()); sParent = s; s = s.left; }
+      narr('tNarr', `Sucessor encontrado: <b>${s.val}</b>. Copiamos o valor para o nó removido e apagamos o sucessor (que tem no máximo 1 filho).`);
+      cur.val = s.val;
+      if (sParent.left === s) sParent.left = s.right; else sParent.right = s.right;
+      log('tLog', `remove(${v}) → substituído pelo sucessor ${s.val}`, 'ok');
+    } else {
+      const child = cur.left || cur.right;
+      narr('tNarr', child ? `<b>${v}</b> tem 1 filho → o filho assume o lugar do nó removido.` : `<b>${v}</b> é folha → remoção direta.`);
+      if (!parent) this.root = child;
+      else if (isLeft) parent.left = child; else parent.right = child;
+      log('tLog', `remove(${v}) → ${child ? 'nó com 1 filho' : 'folha'}`, 'ok');
+    }
+    this.draw({}); this.stats(); this.busy = false;
+  },
+
+  async traverse(kind) {
+    if (this.busy || this.mode !== 'bst') return;
+    if (!this.root) { narr('tNarr', 'Árvore vazia.'); return; }
+    this.busy = true;
+    document.getElementById('tSeq').innerHTML = '';
+    const seq = [];
+    const visit = async (node) => {
+      seq.push(node.val);
+      this.draw({ [node.id]: 'found' });
+      document.getElementById('tSeq').innerHTML = seq.map(x => `<span class="chip">${x}</span>`).join('');
+      narr('tNarr', `Visita <b>${node.val}</b> (posição ${seq.length} da sequência).`);
+      await sleep(this.spd());
+    };
+    if (kind === 'level') {
+      this.codeBST('level', 1);
+      narr('tNarr', 'Percurso em nível usa uma <b>fila</b> — a mesma lógica do BFS em grafos.');
+      const q = [this.root];
+      while (q.length) { const n = q.shift(); await visit(n); if (n.left) q.push(n.left); if (n.right) q.push(n.right); }
+    } else {
+      const rec = async (node) => {
+        if (!node) return;
+        if (kind === 'pre') { this.codeBST('pre', 1); await visit(node); }
+        await rec(node.left);
+        if (kind === 'in') { this.codeBST('in', 2); await visit(node); }
+        await rec(node.right);
+        if (kind === 'post') { this.codeBST('post', 3); await visit(node); }
+      };
+      await rec(this.root);
+    }
+    narr('tNarr', `Percurso completo: <b>${seq.join(', ')}</b>.` + (kind === 'in' ? ' Em uma BST, <b>em ordem sempre produz a sequência ordenada</b> — é a prova visual do porquê do nome "árvore de busca".' : ''));
+    log('tLog', `percurso(${kind}) → ${seq.join(',')}`, 'ok');
+    this.draw({}); this.busy = false;
+  },
+
+  async heapInsert(v) {
+    this.codeHeap('insert', 0);
+    this.heapArr.push(v);
+    let i = this.heapArr.length - 1;
+    narr('tNarr', `${v} inserido no fim do array (índice ${i}) — mantém a árvore <b>completa</b>.`);
+    this.draw({ [i]: 'new' }); await sleep(this.spd());
+    while (i > 0) {
+      const parent = Math.floor((i - 1) / 2);
+      this.cmp++;
+      const shouldSwap = this.heapType === 'max' ? this.heapArr[i] > this.heapArr[parent] : this.heapArr[i] < this.heapArr[parent];
+      this.codeHeap('insert', 3);
+      narr('tNarr', `<b>Sift-up</b>: compara [${i}]=${this.heapArr[i]} com o pai [${parent}]=${this.heapArr[parent]}. ${shouldSwap ? 'Viola a propriedade → troca.' : 'Ok → para.'}`);
+      this.draw({ [i]: 'cmp', [parent]: 'cmp' }); await sleep(this.spd());
+      if (!shouldSwap) break;
+      [this.heapArr[i], this.heapArr[parent]] = [this.heapArr[parent], this.heapArr[i]];
+      this.draw({ [i]: 'new', [parent]: 'new' }); await sleep(this.spd());
+      i = parent;
+    }
+    narr('tNarr', `Heap ${this.heapType === 'max' ? 'máximo' : 'mínimo'} restaurado. Sift-up custa no máximo O(log n) trocas — a altura da árvore.`);
+    log('tLog', `insere(${v}) → sift-up`, 'ok');
+    this.draw({}); this.stats();
+  },
+
+  async heapExtract() {
+    if (this.busy) return; this.busy = true;
+    if (!this.heapArr.length) { narr('tNarr', 'Heap vazio.'); this.busy = false; return; }
+    this.codeHeap('extract', 0);
+    const root = this.heapArr[0];
+    const last = this.heapArr.pop();
+    narr('tNarr', `Remove a raiz (${root}, o ${this.heapType === 'max' ? 'maior' : 'menor'} valor). O <b>último elemento</b> assume o topo para manter a árvore completa.`);
+    if (this.heapArr.length) this.heapArr[0] = last;
+    this.draw({ 0: 'new' }); await sleep(this.spd());
+    let i = 0;
+    while (this.heapArr.length) {
+      const l = 2 * i + 1, r = 2 * i + 2; let target = i;
+      if (l < this.heapArr.length && (this.heapType === 'max' ? this.heapArr[l] > this.heapArr[target] : this.heapArr[l] < this.heapArr[target])) target = l;
+      if (r < this.heapArr.length && (this.heapType === 'max' ? this.heapArr[r] > this.heapArr[target] : this.heapArr[r] < this.heapArr[target])) target = r;
+      this.cmp++;
+      this.codeHeap('extract', 5);
+      const hl = { [i]: 'cmp' }; if (l < this.heapArr.length) hl[l] = 'cmp'; if (r < this.heapArr.length) hl[r] = 'cmp';
+      narr('tNarr', `<b>Sift-down</b> a partir de [${i}]=${this.heapArr[i]}. ${target !== i ? `troca com [${target}]=${this.heapArr[target]}.` : 'filhos ok → para.'}`);
+      this.draw(hl); await sleep(this.spd());
+      if (target === i) break;
+      [this.heapArr[i], this.heapArr[target]] = [this.heapArr[target], this.heapArr[i]];
+      this.draw({ [i]: 'new', [target]: 'new' }); await sleep(this.spd());
+      i = target;
+    }
+    narr('tNarr', `Extraído <b>${root}</b>. Sift-down custa O(log n).`);
+    log('tLog', `extrai${this.heapType === 'max' ? 'Max' : 'Min'}() → ${root}`, 'ok');
+    this.draw({}); this.stats(); this.busy = false;
+  },
+
+  heapToTree(arr) {
+    if (!arr.length) return null;
+    const nodes = arr.map((v, i) => ({ id: 'h' + i, val: v, left: null, right: null, idx: i }));
+    arr.forEach((v, i) => { const l = 2 * i + 1, r = 2 * i + 2; if (l < arr.length) nodes[i].left = nodes[l]; if (r < arr.length) nodes[i].right = nodes[r]; });
+    return nodes[0];
+  },
+
+  draw(highlight = {}) {
+    if (this.mode === 'bst') {
+      drawTreeSVG('tSvg', this.root, { highlight });
+      document.getElementById('tHeapArrWrap').style.display = 'none';
+    } else {
+      const idHighlight = {}; Object.keys(highlight).forEach(k => { idHighlight['h' + k] = highlight[k]; });
+      const root = this.heapToTree(this.heapArr);
+      drawTreeSVG('tSvg', root, { highlight: idHighlight, showIdx: true });
+      drawHeapArray('tHeapArr', this.heapArr, highlight);
+      document.getElementById('tHeapArrWrap').style.display = 'block';
+    }
+  },
+
+  stats() {
+    const count = n => n ? 1 + count(n.left) + count(n.right) : 0;
+    const height = n => n ? 1 + Math.max(height(n.left), height(n.right)) : 0;
+    if (this.mode === 'bst') {
+      document.getElementById('tCount').textContent = count(this.root);
+      document.getElementById('tHeight').textContent = height(this.root);
+    } else {
+      document.getElementById('tCount').textContent = this.heapArr.length;
+      document.getElementById('tHeight').textContent = this.heapArr.length ? Math.floor(Math.log2(this.heapArr.length)) + 1 : 0;
+    }
+    document.getElementById('tCmp').textContent = this.cmp;
+  },
+
+  codeBST(op, hl) {
+    const C = {
+      insert: ['<span class="kw">void</span> <span class="fn">inserir</span>(No** raiz, <span class="kw">int</span> v) {', '  <span class="kw">if</span> (!*raiz) { *raiz = <span class="fn">novoNo</span>(v); <span class="kw">return</span>; }', '  <span class="kw">if</span> (v &lt; (*raiz)->val) <span class="fn">inserir</span>(&(*raiz)->esq, v);', '  <span class="kw">else if</span> (v &gt; (*raiz)->val) <span class="fn">inserir</span>(&(*raiz)->dir, v);', '}'],
+      search: ['No* <span class="fn">buscar</span>(No* n, <span class="kw">int</span> v) {', '  <span class="kw">if</span> (!n || n->val == v) <span class="kw">return</span> n;', '  <span class="kw">if</span> (v &lt; n->val) <span class="kw">return</span> <span class="fn">buscar</span>(n->esq, v);', '  <span class="kw">return</span> <span class="fn">buscar</span>(n->dir, v);', '}'],
+      remove: ['No* <span class="fn">remover</span>(No* n, <span class="kw">int</span> v) {', '  <span class="cm">// folha: remove direto</span>', '  <span class="cm">// 1 filho: substitui pelo filho</span>', '  <span class="cm">// 2 filhos: copia sucessor in-order e remove o sucessor</span>', '}'],
+      pre: ['<span class="kw">void</span> <span class="fn">preOrdem</span>(No* n) {', '  <span class="fn">visita</span>(n);', '  <span class="fn">preOrdem</span>(n->esq);', '  <span class="fn">preOrdem</span>(n->dir);', '}'],
+      in: ['<span class="kw">void</span> <span class="fn">emOrdem</span>(No* n) {', '  <span class="fn">emOrdem</span>(n->esq);', '  <span class="fn">visita</span>(n);', '  <span class="fn">emOrdem</span>(n->dir);', '}'],
+      post: ['<span class="kw">void</span> <span class="fn">posOrdem</span>(No* n) {', '  <span class="fn">posOrdem</span>(n->esq);', '  <span class="fn">posOrdem</span>(n->dir);', '  <span class="fn">visita</span>(n);', '}'],
+      level: ['<span class="kw">void</span> <span class="fn">emNivel</span>(No* raiz) {', '  fila.<span class="fn">inserir</span>(raiz);', '  <span class="kw">while</span> (fila não vazia) {', '    n = fila.<span class="fn">remover</span>(); <span class="fn">visita</span>(n);', '    <span class="kw">if</span>(n->esq) fila.<span class="fn">inserir</span>(n->esq);', '    <span class="kw">if</span>(n->dir) fila.<span class="fn">inserir</span>(n->dir);', '  }', '}']
+    };
+    codeBlock('tCode', C[op] || C.insert, hl);
+  },
+  codeHeap(op, hl) {
+    const C = {
+      insert: ['<span class="kw">void</span> <span class="fn">inserir</span>(<span class="kw">int</span> v) {', '  arr[fim++] = v;', '  i = fim - 1;', '  <span class="kw">while</span> (i&gt;0 && <span class="fn">viola</span>(arr[i], arr[pai(i)])) {', '    <span class="fn">troca</span>(arr[i], arr[pai(i)]); i = pai(i);', '  }', '}'],
+      extract: ['<span class="kw">int</span> <span class="fn">extrairRaiz</span>() {', '  raiz = arr[0];', '  arr[0] = arr[--fim]; <span class="cm">// último vai pro topo</span>', '  i = 0;', '  <span class="kw">while</span> (<span class="fn">temFilhoQueViola</span>(i)) {', '    j = <span class="fn">filhoPrioritario</span>(i); <span class="fn">troca</span>(arr[i], arr[j]); i = j;', '  }', '  <span class="kw">return</span> raiz;', '}']
+    };
+    codeBlock('tCode', C[op] || C.insert, hl);
+  }
+};
+TH.clear();
+
+/* ================= ÁRVORES BALANCEADAS (AVL) ================= */
+function avlH(n) { return n ? n.h : 0; }
+function avlUpd(n) { n.h = 1 + Math.max(avlH(n.left), avlH(n.right)); }
+function avlBF(n) { return n ? avlH(n.left) - avlH(n.right) : 0; }
+function avlRotR(y) { const x = y.left; const T2 = x.right; x.right = y; y.left = T2; avlUpd(y); avlUpd(x); return x; }
+function avlRotL(x) { const y = x.right; const T2 = y.left; y.left = x; x.right = T2; avlUpd(x); avlUpd(y); return y; }
+
+const AV = {
+  mode: 'avl', root: null, idc: 0, busy: false,
+
+  spd() { return 260 - parseInt(document.getElementById('avSpeed').value) * 2.3; },
+  mkNode(v) { return { id: 'a' + (this.idc++), val: v, left: null, right: null, h: 1 }; },
+
+  setMode() { this.mode = document.getElementById('avMode').value; this.clear(); narr('avNarr', `Modo: ${this.mode === 'avl' ? 'AVL' : 'BST simples'}. Árvore reiniciada para comparação justa.`); },
+
+  clear() {
+    this.root = null; this.idc = 0;
+    document.getElementById('avLog').innerHTML = ''; document.getElementById('avLog').dataset.empty = '1';
+    narr('avNarr', 'Árvore vazia.');
+    this.codeAVL(-1);
+    this.draw({}); this.stats();
+  },
+
+  async insertRec(node, v) {
+    if (!node) { const n = this.mkNode(v); narr('avNarr', `Espaço vazio → <b>${v}</b> criado.`); this.draw({ [n.id]: 'new' }); await sleep(this.spd()); return n; }
+    this.codeAVL(2);
+    this.draw({ [node.id]: 'cmp' });
+    if (v === node.val) { narr('avNarr', `${v} já existe — ignorado.`); await sleep(this.spd()); return node; }
+    narr('avNarr', `${v} ${v < node.val ? '&lt;' : '&gt;'} ${node.val} → vai para ${v < node.val ? 'esquerda' : 'direita'}.`);
+    await sleep(this.spd());
+    if (v < node.val) node.left = await this.insertRec(node.left, v);
+    else node.right = await this.insertRec(node.right, v);
+
+    avlUpd(node);
+    if (this.mode !== 'avl') { this.draw({}); return node; }
+
+    this.codeAVL(5);
+    const bf = avlBF(node);
+    if (Math.abs(bf) > 1) {
+      this.draw({ [node.id]: 'rot' });
+      narr('avNarr', `Subindo a recursão: nó <b>${node.val}</b> tem fator de balanceamento <b>${bf}</b> — desbalanceado!`);
+      await sleep(this.spd());
+      this.codeAVL(6);
+    }
+    if (bf > 1 && v < node.left.val) { narr('avNarr', `Caso <b>Esquerda-Esquerda</b>: rotação simples à direita em ${node.val}.`); log('avLog', `rotação LL em ${node.val}`, 'warn'); const r = avlRotR(node); this.draw({ [r.id]: 'rot' }); await sleep(this.spd() * 1.4); return r; }
+    if (bf > 1) { narr('avNarr', `Caso <b>Esquerda-Direita</b>: rotação dupla (esquerda em ${node.left.val}, depois direita em ${node.val}).`); log('avLog', `rotação LR em ${node.val}`, 'warn'); node.left = avlRotL(node.left); const r = avlRotR(node); this.draw({ [r.id]: 'rot' }); await sleep(this.spd() * 1.4); return r; }
+    if (bf < -1 && v > node.right.val) { narr('avNarr', `Caso <b>Direita-Direita</b>: rotação simples à esquerda em ${node.val}.`); log('avLog', `rotação RR em ${node.val}`, 'warn'); const r = avlRotL(node); this.draw({ [r.id]: 'rot' }); await sleep(this.spd() * 1.4); return r; }
+    if (bf < -1) { narr('avNarr', `Caso <b>Direita-Esquerda</b>: rotação dupla (direita em ${node.right.val}, depois esquerda em ${node.val}).`); log('avLog', `rotação RL em ${node.val}`, 'warn'); node.right = avlRotR(node.right); const r = avlRotL(node); this.draw({ [r.id]: 'rot' }); await sleep(this.spd() * 1.4); return r; }
+
+    this.draw({});
+    return node;
+  },
+
+  async insert() {
+    if (this.busy) return; this.busy = true;
+    const v = parseInt(document.getElementById('avVal').value) || 0;
+    this.codeAVL(0);
+    this.root = await this.insertRec(this.root, v);
+    this.stats(); this.draw({});
+    log('avLog', `insere(${v}) → altura final ${avlH(this.root)}`, 'ok');
+    this.busy = false;
+  },
+
+  async seqDemo() {
+    if (this.busy) return; this.busy = true;
+    this.root = null; this.idc = 0;
+    document.getElementById('avLog').innerHTML = ''; document.getElementById('avLog').dataset.empty = '1';
+    for (let v = 1; v <= 7; v++) { this.root = await this.insertRec(this.root, v); this.stats(); }
+    narr('avNarr', this.mode === 'avl'
+      ? `Inseridos 1→7 em sequência crescente. Altura final: <b>${avlH(this.root)}</b> (log₂7≈3) — as rotações mantiveram a árvore compacta.`
+      : `Inseridos 1→7 <b>sem balanceamento</b>: a árvore virou uma linha reta, altura <b>${avlH(this.root)}</b> = número de elementos. Busca aqui é O(n). Troque para "AVL" e repita para comparar.`);
+    log('avLog', `demo 1→7 → altura ${avlH(this.root)}`, this.mode === 'avl' ? 'ok' : 'warn');
+    this.stats(); this.draw({}); this.busy = false;
+  },
+
+  count(n) { return n ? 1 + this.count(n.left) + this.count(n.right) : 0; },
+  stats() {
+    document.getElementById('avCount').textContent = this.count(this.root);
+    document.getElementById('avHeight').textContent = avlH(this.root);
+    document.getElementById('avRootBF').textContent = this.root ? avlBF(this.root) : 0;
+  },
+  draw(highlight) { drawTreeSVG('avSvg', this.root, { highlight, showBF: this.mode === 'avl' }); },
+
+  codeAVL(hl) {
+    codeBlock('avCode', [
+      '<span class="kw">No*</span> <span class="fn">inserir</span>(No* n, <span class="kw">int</span> v) {',
+      '  <span class="kw">if</span> (!n) <span class="kw">return</span> <span class="fn">novoNo</span>(v);',
+      '  <span class="kw">if</span> (v &lt; n->val) n->esq = <span class="fn">inserir</span>(n->esq, v);',
+      '  <span class="kw">else</span> n->dir = <span class="fn">inserir</span>(n->dir, v);',
+      '  <span class="fn">atualizaAltura</span>(n);',
+      '  bf = <span class="fn">fatorBalanceamento</span>(n);',
+      '  <span class="kw">if</span> (bf &gt; 1 || bf &lt; -1) n = <span class="fn">rotaciona</span>(n); <span class="cm">// LL/RR/LR/RL</span>',
+      '  <span class="kw">return</span> n;',
+      '}'
+    ], hl);
+  }
+};
+AV.clear();
+
+/* ================= GRAFOS & BUSCA ================= */
+const GRAPH_NODES = [
+  { id: 'A', x: 130, y: 70 }, { id: 'B', x: 330, y: 46 }, { id: 'C', x: 500, y: 110 },
+  { id: 'D', x: 570, y: 260 }, { id: 'E', x: 430, y: 345 }, { id: 'F', x: 250, y: 335 },
+  { id: 'G', x: 85, y: 260 }, { id: 'H', x: 195, y: 175 }
+];
+const GRAPH_EDGES = [
+  ['A', 'B', 4], ['A', 'H', 8], ['A', 'G', 8], ['B', 'C', 8], ['B', 'H', 11],
+  ['C', 'D', 7], ['C', 'F', 4], ['D', 'E', 9], ['D', 'F', 14], ['E', 'F', 10],
+  ['F', 'G', 2], ['G', 'H', 1]
+];
+function buildAdj() {
+  const adj = {}; GRAPH_NODES.forEach(n => adj[n.id] = []);
+  GRAPH_EDGES.forEach(([a, b, w]) => { adj[a].push({ to: b, w }); adj[b].push({ to: a, w }); });
+  return adj;
+}
+
+const G = {
+  adj: buildAdj(), busy: false, lastDist: null, lastPrev: null,
+
+  spd() { return 260 - parseInt(document.getElementById('gSpeed').value) * 2.2; },
+
+  drawBase(state = {}) {
+    const svg = document.getElementById('gSvg');
+    let s = '';
+    GRAPH_EDGES.forEach(([a, b, w]) => {
+      const A = GRAPH_NODES.find(n => n.id === a), B = GRAPH_NODES.find(n => n.id === b);
+      const inPath = state.pathEdges && (state.pathEdges.has(a + '-' + b) || state.pathEdges.has(b + '-' + a));
+      s += `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="${inPath ? '#27ae60' : '#c9c9e8'}" stroke-width="${inPath ? 4 : 2.5}"/>`;
+      const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+      s += `<rect x="${mx - 11}" y="${my - 10}" width="22" height="16" fill="#fff" opacity=".9"/><text x="${mx}" y="${my + 3}" text-anchor="middle" font-size="11" font-family="monospace" fill="#666">${w}</text>`;
+    });
+    GRAPH_NODES.forEach(n => {
+      let fill = '#667eea';
+      if (state.current === n.id) fill = '#e67e22';
+      else if (state.frontier && state.frontier[n.id]) fill = '#f1c40f';
+      else if (state.visited && state.visited[n.id]) fill = '#27ae60';
+      s += `<circle cx="${n.x}" cy="${n.y}" r="22" fill="${fill}" stroke="#333" stroke-width="1.5"/>`;
+      s += `<text x="${n.x}" y="${n.y + 5}" text-anchor="middle" font-size="15" font-weight="bold" fill="#fff">${n.id}</text>`;
+      if (state.dist && state.dist[n.id] !== undefined) {
+        s += `<text x="${n.x}" y="${n.y - 30}" text-anchor="middle" font-size="12" font-family="monospace" font-weight="bold" fill="#8e44ad">${state.dist[n.id] === Infinity ? '∞' : state.dist[n.id]}</text>`;
+      }
+    });
+    svg.innerHTML = s;
+    svg.setAttribute('viewBox', '0 0 640 400');
+  },
+
+  renderQS(arr, label) { document.getElementById('gQS').innerHTML = `<b>${label}:</b> [ ${arr.join(', ') || '&nbsp;'} ]`; },
+  renderDist(dist) { document.getElementById('gQS').innerHTML = '<b>Distâncias provisórias:</b>&nbsp; ' + GRAPH_NODES.map(n => `${n.id}=${dist[n.id] === Infinity ? '∞' : dist[n.id]}`).join('&nbsp;&nbsp;'); },
+
+  async bfs() {
+    if (this.busy) return; this.busy = true;
+    const start = document.getElementById('gStart').value;
+    document.getElementById('gLog').innerHTML = ''; document.getElementById('gLog').dataset.empty = '1';
+    this.codeG('bfs', 0);
+    const visited = { [start]: true }; const queue = [start]; const order = [];
+    narr('gNarr', `Fila inicial: [${start}]. BFS explora <b>em camadas</b> — todos os vizinhos diretos antes de ir mais fundo.`);
+    this.renderQS(queue, 'Fila');
+    this.drawBase({ visited, frontier: { [start]: true } }); await sleep(this.spd());
+    while (queue.length) {
+      this.codeG('bfs', 2);
+      const u = queue.shift();
+      order.push(u);
+      narr('gNarr', `<code>fila.remover()</code> → visita <b>${u}</b>.`);
+      log('gLog', `visita ${u}`, 'ok');
+      this.drawBase({ visited, current: u }); this.renderQS(queue, 'Fila'); await sleep(this.spd());
+      const neighbors = [...this.adj[u]].sort((a, b) => a.to.localeCompare(b.to));
+      this.codeG('bfs', 4);
+      for (const { to } of neighbors) {
+        if (!visited[to]) {
+          visited[to] = true; queue.push(to);
+          narr('gNarr', `Vizinho <b>${to}</b> de ${u} ainda não visitado → marca e <b>enfileira</b>.`);
+          this.drawBase({ visited, current: u, frontier: Object.fromEntries(queue.map(x => [x, true])) }); this.renderQS(queue, 'Fila'); await sleep(this.spd() * 0.7);
+        }
+      }
+    }
+    narr('gNarr', `✅ BFS completo. Ordem de visita: <b>${order.join(' → ')}</b>. Como usa fila, essa ordem corresponde à <b>distância mínima em número de arestas</b> a partir de ${start}.`);
+    this.drawBase({ visited }); this.busy = false;
+  },
+
+  async dfs() {
+    if (this.busy) return; this.busy = true;
+    const start = document.getElementById('gStart').value;
+    document.getElementById('gLog').innerHTML = ''; document.getElementById('gLog').dataset.empty = '1';
+    this.codeG('dfs', 0);
+    const visited = {}; const stack = [start]; const order = [];
+    narr('gNarr', `Pilha inicial: [${start}]. DFS mergulha <b>fundo</b> antes de voltar — a mesma lógica da pilha de chamadas de uma função recursiva.`);
+    this.renderQS(stack, 'Pilha');
+    this.drawBase({ visited, frontier: { [start]: true } }); await sleep(this.spd());
+    while (stack.length) {
+      this.codeG('dfs', 2);
+      const u = stack.pop();
+      if (visited[u]) { narr('gNarr', `${u} foi desempilhado, mas <b>já estava visitado</b> — ignora e segue (comum em DFS iterativo com pilha).`); this.renderQS(stack, 'Pilha'); await sleep(this.spd() * 0.6); continue; }
+      visited[u] = true; order.push(u);
+      narr('gNarr', `<code>pilha.pop()</code> → visita <b>${u}</b>.`);
+      log('gLog', `visita ${u}`, 'ok');
+      this.drawBase({ visited, current: u }); this.renderQS(stack, 'Pilha'); await sleep(this.spd());
+      const neighbors = [...this.adj[u]].sort((a, b) => b.to.localeCompare(a.to));
+      this.codeG('dfs', 6);
+      for (const { to } of neighbors) {
+        if (!visited[to]) {
+          stack.push(to);
+          narr('gNarr', `Vizinho <b>${to}</b> de ${u} não visitado → <b>empilha</b>.`);
+          this.drawBase({ visited, current: u, frontier: Object.fromEntries(stack.map(x => [x, true])) }); this.renderQS(stack, 'Pilha'); await sleep(this.spd() * 0.7);
+        }
+      }
+    }
+    narr('gNarr', `✅ DFS completo. Ordem de visita: <b>${order.join(' → ')}</b>. Repare que é diferente da ordem do BFS — DFS não garante caminho mais curto.`);
+    this.drawBase({ visited }); this.busy = false;
+  },
+
+  async dijkstra() {
+    if (this.busy) return; this.busy = true;
+    const start = document.getElementById('gStart').value;
+    document.getElementById('gLog').innerHTML = ''; document.getElementById('gLog').dataset.empty = '1';
+    this.codeG('dij', 0);
+    const dist = {}, prev = {}, visited = {};
+    GRAPH_NODES.forEach(n => dist[n.id] = Infinity); dist[start] = 0;
+    narr('gNarr', `Tabela inicializada: ${start}=0, todos os outros=∞.`);
+    this.renderDist(dist);
+    this.drawBase({ dist }); await sleep(this.spd());
+    for (let iter = 0; iter < GRAPH_NODES.length; iter++) {
+      this.codeG('dij', 2);
+      let u = null, best = Infinity;
+      GRAPH_NODES.forEach(n => { if (!visited[n.id] && dist[n.id] < best) { best = dist[n.id]; u = n.id; } });
+      if (u === null) break;
+      visited[u] = true;
+      narr('gNarr', `Escolhe o não-visitado com <b>menor distância provisória</b>: <b>${u}</b> (dist=${dist[u]}). É o papel de uma fila de prioridade.`);
+      log('gLog', `finaliza ${u} com dist=${dist[u]}`, 'ok');
+      this.drawBase({ visited, current: u, dist }); await sleep(this.spd());
+      this.codeG('dij', 3);
+      for (const { to, w } of this.adj[u]) {
+        if (visited[to]) continue;
+        const cand = dist[u] + w;
+        this.drawBase({ visited, current: u, dist });
+        if (cand < dist[to]) {
+          this.codeG('dij', 5);
+          narr('gNarr', `<b>Relaxamento</b>: dist(${u})+peso(${u}→${to}) = ${dist[u]}+${w} = ${cand} &lt; dist(${to})=${dist[to] === Infinity ? '∞' : dist[to]} → atualiza.`);
+          dist[to] = cand; prev[to] = u;
+          this.renderDist(dist); await sleep(this.spd() * 0.8);
+        } else {
+          narr('gNarr', `Caminho por ${u} até ${to} custaria ${cand}, não melhora dist(${to})=${dist[to]} → mantém.`);
+          await sleep(this.spd() * 0.5);
+        }
+      }
+    }
+    narr('gNarr', `✅ Dijkstra completo a partir de ${start}. Use o seletor "destino" para reconstruir o caminho mais curto.`);
+    this.lastDist = dist; this.lastPrev = prev;
+    this.drawBase({ visited, dist }); this.busy = false;
+  },
+
+  showPath() {
+    const target = document.getElementById('gTarget').value;
+    if (!this.lastPrev) { narr('gNarr', 'Rode o Dijkstra primeiro.'); return; }
+    let path = [target], cur = target;
+    while (this.lastPrev[cur]) { cur = this.lastPrev[cur]; path.unshift(cur); }
+    const pathEdges = new Set();
+    for (let i = 0; i < path.length - 1; i++) pathEdges.add(path[i] + '-' + path[i + 1]);
+    narr('gNarr', `Caminho mais curto até ${target}: <b>${path.join(' → ')}</b>, custo total <b>${this.lastDist[target]}</b>.`);
+    this.drawBase({ visited: Object.fromEntries(path.map(p => [p, true])), dist: this.lastDist, pathEdges });
+  },
+
+  codeG(kind, hl) {
+    const C = {
+      bfs: ['<span class="kw">fila</span> = [inicio]; visitado[inicio] = true;', '<span class="kw">while</span> (fila não vazia) {', '  u = fila.<span class="fn">remover</span>();  <span class="cm">// FIFO</span>', '  <span class="kw">for</span> (v <span class="kw">de</span> vizinhos(u))', '    <span class="kw">if</span> (!visitado[v]) { visitado[v]=true; fila.<span class="fn">inserir</span>(v); }', '}'],
+      dfs: ['<span class="kw">pilha</span> = [inicio];', '<span class="kw">while</span> (pilha não vazia) {', '  u = pilha.<span class="fn">pop</span>();  <span class="cm">// LIFO</span>', '  <span class="kw">if</span> (visitado[u]) <span class="kw">continue</span>;', '  visitado[u] = true;', '  <span class="kw">for</span> (v <span class="kw">de</span> vizinhos(u))', '    <span class="kw">if</span> (!visitado[v]) pilha.<span class="fn">push</span>(v);', '}'],
+      dij: ['dist[inicio] = 0; outros = ∞;', '<span class="kw">while</span> (houver não-visitado) {', '  u = não-visitado <span class="kw">com</span> menor dist[u];', '  <span class="kw">for</span> ((v,peso) <span class="kw">de</span> vizinhos(u))', '    <span class="kw">if</span> (dist[u]+peso &lt; dist[v])', '      dist[v] = dist[u]+peso;  <span class="cm">// relaxamento</span>', '}']
+    };
+    codeBlock('gCode', C[kind], hl);
+  }
+};
+G.drawBase({}); G.codeG('bfs', -1);
+</script>
+</body>
+</html>
