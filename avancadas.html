@@ -362,8 +362,8 @@ Cada rotação é O(1) — só religa 3 ponteiros. Por isso manter uma AVL balan
 <div class="panel"><div id="gQS" style="font-family:monospace;font-size:.9em">Fila/Pilha/Distâncias aparecem aqui durante a execução.</div></div>
 
 <div class="panel">
-<h3>🎞️ Linha do tempo da busca (BFS / DFS)</h3>
-<div id="gFrames"><p style="color:#999;text-align:center;padding:20px">Rode um BFS ou DFS para ver o filme passo a passo — grafo, lista de adjacência, visitados e fila/pilha lado a lado, como num livro-texto.</p></div>
+<h3>🎞️ Linha do tempo da execução</h3>
+<div id="gFrames"><p style="color:#999;text-align:center;padding:20px">Rode qualquer algoritmo (BFS, DFS, Dijkstra ou Prim) para ver o filme passo a passo — grafo, lista de adjacência, estado da estrutura e a descrição de cada passo, como num livro-texto.</p></div>
 </div>
 
 <div class="stat-row">
@@ -1189,12 +1189,13 @@ const G = {
   renderDist(dist) { document.getElementById('gQS').innerHTML = '<b>Distâncias provisórias:</b>&nbsp; ' + GRAPH_NODES.map(n => `${n.id}=${dist[n.id] === Infinity ? '∞' : dist[n.id]}`).join('&nbsp;&nbsp;'); },
   renderKeyTable(key, inTree) { document.getElementById('gQS').innerHTML = '<b>Custo mínimo de conexão:</b>&nbsp; ' + GRAPH_NODES.map(n => `${n.id}${inTree[n.id] ? '✓' : ''}=${key[n.id] === Infinity ? '∞' : key[n.id]}`).join('&nbsp;&nbsp;'); },
 
-  addFrame(current, visitedSeq, structArr, structLabel, desc) {
+  addFrame(current, visitedSeq, structArr, structLabel, desc, directedOverride) {
     const el = document.getElementById('gFrames');
     if (el.dataset.empty !== '0') { el.innerHTML = ''; el.dataset.empty = '0'; }
-    const state = { visited: Object.fromEntries(visitedSeq.map(v => [v, true])), current, frontier: Object.fromEntries(structArr.map(v => [v, true])) };
-    const svgStr = graphSVGStandalone(state, this.directed, 160, 130, 13);
-    const adjStr = renderAdjListHTML(this.directed, current);
+    const directed = directedOverride !== undefined ? directedOverride : this.directed;
+    const state = { visited: Object.fromEntries(visitedSeq.map(v => [v, true])), current, frontier: Object.fromEntries(structArr.filter(v => GRAPH_NODES.some(n => n.id === v)).map(v => [v, true])) };
+    const svgStr = graphSVGStandalone(state, directed, 160, 130, 13);
+    const adjStr = renderAdjListHTML(directed, current);
     const card = document.createElement('div');
     card.className = 'frame-card';
     card.innerHTML = `<div class="frame-mini">${svgStr}</div>
@@ -1297,24 +1298,27 @@ const G = {
     if (this.busy) return; this.busy = true;
     const start = document.getElementById('gStart').value;
     document.getElementById('gLog').innerHTML = ''; document.getElementById('gLog').dataset.empty = '1';
-    document.getElementById('gFrames').innerHTML = '<p style="color:#999;text-align:center;padding:20px">A linha do tempo aparece durante BFS ou DFS.</p>'; document.getElementById('gFrames').dataset.empty = '1';
+    document.getElementById('gFrames').innerHTML = ''; document.getElementById('gFrames').dataset.empty = '1';
     document.getElementById('gPrimTotal').textContent = '—';
     this.codeG('dij', 0);
-    const dist = {}, prev = {}, visited = {};
+    const dist = {}, prev = {}, visited = {}; const order = [];
     GRAPH_NODES.forEach(n => dist[n.id] = Infinity); dist[start] = 0;
     narr('gNarr', `Tabela inicializada: ${start}=0, todos os outros=∞.`);
     this.renderDist(dist);
-    this.drawBase({ dist }); await sleep(this.spd());
+    this.drawBase({ dist });
+    this.addFrame(null, [], GRAPH_NODES.map(n => `${n.id}=${dist[n.id] === Infinity ? '∞' : dist[n.id]}`), 'Distâncias', `Inicializa a tabela de distâncias.<br>dist(${start}) = 0, todos os demais = ∞.`);
+    await sleep(this.spd());
     for (let iter = 0; iter < GRAPH_NODES.length; iter++) {
       this.codeG('dij', 2);
       let u = null, best = Infinity;
       GRAPH_NODES.forEach(n => { if (!visited[n.id] && dist[n.id] < best) { best = dist[n.id]; u = n.id; } });
       if (u === null) break;
-      visited[u] = true;
+      visited[u] = true; order.push(u);
       narr('gNarr', `Escolhe o não-visitado com <b>menor distância provisória</b>: <b>${u}</b> (dist=${dist[u]}). É o papel de uma fila de prioridade.`);
       log('gLog', `finaliza ${u} com dist=${dist[u]}`, 'ok');
       this.drawBase({ visited, current: u, dist }); await sleep(this.spd());
       this.codeG('dij', 3);
+      const relaxed = [];
       for (const { to, w } of this.adj[u]) {
         if (visited[to]) continue;
         const cand = dist[u] + w;
@@ -1322,13 +1326,18 @@ const G = {
         if (cand < dist[to]) {
           this.codeG('dij', 5);
           narr('gNarr', `<b>Relaxamento</b>: dist(${u})+peso(${u}→${to}) = ${dist[u]}+${w} = ${cand} &lt; dist(${to})=${dist[to] === Infinity ? '∞' : dist[to]} → atualiza.`);
-          dist[to] = cand; prev[to] = u;
+          dist[to] = cand; prev[to] = u; relaxed.push(to);
           this.renderDist(dist); await sleep(this.spd() * 0.8);
         } else {
           narr('gNarr', `Caminho por ${u} até ${to} custaria ${cand}, não melhora dist(${to})=${dist[to]} → mantém.`);
           await sleep(this.spd() * 0.5);
         }
       }
+      let desc = `Finaliza o vértice <b>${u}</b> com dist=${dist[u]} (o menor entre os não-visitados).`;
+      desc += relaxed.length ? `<br>Relaxa as arestas de ${u} e melhora a distância de: ${relaxed.join(', ')}.` : `<br>Nenhuma distância vizinha melhorou.`;
+      const remaining = GRAPH_NODES.some(n => !visited[n.id] && dist[n.id] < Infinity);
+      if (!remaining) desc += '<br><br><b>Não há mais vértices alcançáveis: fim da busca!</b>';
+      this.addFrame(u, order.slice(), GRAPH_NODES.map(n => `${n.id}=${dist[n.id] === Infinity ? '∞' : dist[n.id]}`), 'Distâncias', desc);
     }
     narr('gNarr', `✅ Dijkstra completo a partir de ${start}. Use o seletor "destino" para reconstruir o caminho mais curto.`);
     this.lastDist = dist; this.lastPrev = prev;
@@ -1339,36 +1348,43 @@ const G = {
     if (this.busy) return; this.busy = true;
     const start = document.getElementById('gStart').value;
     document.getElementById('gLog').innerHTML = ''; document.getElementById('gLog').dataset.empty = '1';
-    document.getElementById('gFrames').innerHTML = '<p style="color:#999;text-align:center;padding:20px">A linha do tempo aparece durante BFS ou DFS.</p>'; document.getElementById('gFrames').dataset.empty = '1';
+    document.getElementById('gFrames').innerHTML = ''; document.getElementById('gFrames').dataset.empty = '1';
     this.codeG('prim', 0);
     const adjU = buildAdj(false);
-    const key = {}, inTree = {}, parent = {};
+    const key = {}, inTree = {}, parent = {}; const order = [];
     GRAPH_NODES.forEach(n => key[n.id] = Infinity);
     key[start] = 0;
     narr('gNarr', `Prim sempre trabalha sobre o grafo <b>não-direcionado</b> (árvore geradora mínima não faz sentido com arestas de mão única). Começando em ${start}: custo=0, demais=∞.`);
     this.renderKeyTable(key, inTree);
-    this.drawBase({ dist: key }); await sleep(this.spd());
+    this.drawBase({ dist: key });
+    this.addFrame(null, [], GRAPH_NODES.map(n => `${n.id}=${key[n.id] === Infinity ? '∞' : key[n.id]}`), 'Custo mínimo', `Inicializa o custo de conexão.<br>key(${start}) = 0, todos os demais = ∞.`, false);
+    await sleep(this.spd());
     const mstEdges = new Set(); let total = 0;
     for (let iter = 0; iter < GRAPH_NODES.length; iter++) {
       this.codeG('prim', 2);
       let u = null, best = Infinity;
       GRAPH_NODES.forEach(n => { if (!inTree[n.id] && key[n.id] < best) { best = key[n.id]; u = n.id; } });
       if (u === null) break;
-      inTree[u] = true;
-      if (parent[u]) { mstEdges.add(parent[u] + '-' + u); mstEdges.add(u + '-' + parent[u]); total += key[u]; log('gLog', `adiciona aresta ${parent[u]}–${u} (peso ${key[u]}) à MST`, 'ok'); }
-      else { log('gLog', `${u} é o vértice inicial (raiz da MST)`, 'ok'); }
+      inTree[u] = true; order.push(u);
+      let desc;
+      if (parent[u]) { mstEdges.add(parent[u] + '-' + u); mstEdges.add(u + '-' + parent[u]); total += key[u]; log('gLog', `adiciona aresta ${parent[u]}–${u} (peso ${key[u]}) à MST`, 'ok'); desc = `Adiciona <b>${u}</b> à árvore via a aresta ${parent[u]}–${u} (peso ${key[u]}).`; }
+      else { log('gLog', `${u} é o vértice inicial (raiz da MST)`, 'ok'); desc = `<b>${u}</b> é o vértice inicial — raiz da árvore geradora.`; }
       narr('gNarr', `Escolhe o vértice fora da árvore com <b>menor custo de conexão</b>: <b>${u}</b>${parent[u] ? ` (via aresta ${parent[u]}–${u}, peso ${key[u]})` : ''}.`);
       this.drawBase({ visited: inTree, current: u, dist: key, pathEdges: mstEdges }); await sleep(this.spd());
       this.codeG('prim', 4);
+      const updated = [];
       for (const { to, w } of adjU[u]) {
         if (inTree[to]) continue;
         if (w < key[to]) {
           this.codeG('prim', 6);
           narr('gNarr', `Aresta ${u}–${to} custa ${w}, menor que o custo atual de conectar ${to} (${key[to] === Infinity ? '∞' : key[to]}) → atualiza.`);
-          key[to] = w; parent[to] = u;
+          key[to] = w; parent[to] = u; updated.push(to);
           this.renderKeyTable(key, inTree); await sleep(this.spd() * 0.8);
         }
       }
+      desc += updated.length ? `<br>Atualiza o custo de conexão de: ${updated.join(', ')}.` : `<br>Nenhum custo de conexão melhorou.`;
+      if (order.length === GRAPH_NODES.length) desc += '<br><br><b>Todos os vértices conectados: MST completa!</b>';
+      this.addFrame(u, order.slice(), GRAPH_NODES.map(n => `${n.id}${inTree[n.id] ? '✓' : ''}=${key[n.id] === Infinity ? '∞' : key[n.id]}`), 'Custo mínimo', desc, false);
     }
     narr('gNarr', `✅ Prim completo. Árvore geradora mínima com <b>${GRAPH_NODES.length - 1} arestas</b> e peso total <b>${total}</b> — o menor possível para conectar todos os vértices.`);
     document.getElementById('gPrimTotal').textContent = total;
